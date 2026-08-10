@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>yocs_velocity_smoother</name>
+  <version>0.12.1</version>
+  <description>Bound incoming velocity commands according to velocity and acceleration limits.</description>
+
+  <maintainer email="jihoonl@yujinrobot.com">Jihoon Lee</maintainer>
+  <author>Jorge Santos Simon</author>
+  <license>BSD</license>
+  <url type="repository">https://github.com/yujinrobot/yujin_ocs</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>dynamic_reconfigure</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>nodelet</depend>
+  <depend>pluginlib</depend>
+  <depend>roscpp</depend>
+
+  <export>
+    <nodelet plugin="${prefix}/plugins/nodelets.xml" />
+  </export>
+</package>

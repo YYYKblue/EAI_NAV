@@ -1,0 +1,7 @@
+box_frame: base_footprint
+max_x: 0.45
+max_y: 0.3
+max_z: 0.5
+min_x: 0.1
+min_y: -0.3
+min_z: 0.05

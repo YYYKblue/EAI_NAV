@@ -1,0 +1,28 @@
+# ROS / catkin build outputs
+build/
+devel/
+install/
+logs/
+log/
+
+# catkin_tools
+.catkin_tools/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ROS runtime files
+*.bag
+*.bag.active

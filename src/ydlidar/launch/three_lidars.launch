@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find ydlidar)/launch/ydlidar1_up.launch" />
+  <include file="$(find ydlidar)/launch/ydlidar2_backup.launch" />
+  <include file="$(find ydlidar)/launch/ydlidar3_down.launch" />
+</launch>

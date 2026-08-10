@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>dashgo_bringup</name>
+  <version>0.1.0</version>
+  <description>Minimal mapping, navigation, RViz and teleoperation integration for Dashgo.</description>
+
+  <maintainer email="bboss@todo.todo">bboss</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>rospy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf</depend>
+
+  <exec_depend>amcl</exec_depend>
+  <exec_depend>costmap_2d</exec_depend>
+  <exec_depend>dashgo_description</exec_depend>
+  <exec_depend>dashgo_driver</exec_depend>
+  <exec_depend>global_planner</exec_depend>
+  <exec_depend>gmapping</exec_depend>
+  <exec_depend>map_server</exec_depend>
+  <exec_depend>move_base</exec_depend>
+  <exec_depend>nodelet</exec_depend>
+  <exec_depend>robot_pose_ekf</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>teb_local_planner</exec_depend>
+  <exec_depend>ydlidar</exec_depend>
+  <exec_depend>yocs_velocity_smoother</exec_depend>
+</package>
