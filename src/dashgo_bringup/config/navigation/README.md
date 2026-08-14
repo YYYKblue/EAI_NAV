@@ -43,7 +43,8 @@ Costmap 和 TEB 是两个独立模块，机器人轮廓不能合并成一个 ROS
 
 ## 调参注意点
 
-- `inflation_radius` 当前保留原来实际生效的 `0.2 m`，该值尚未根据现场通道宽度重新标定。
-- `min_obstacle_dist` 是从机器人 footprint 外缘到障碍物的额外期望间距，不是从机器人中心计算。
+- `inflation_radius: 0.50` 是全局、局部 costmap 的软代价影响范围，不是全部不可通行的硬障碍半径。
+- `min_obstacle_dist: 0.15` 是从机器人 footprint 外缘到障碍物的期望间距，不是从机器人中心计算。
+- `inflation_dist: 0.30` 是 TEB 在最小间距之外施加较弱避障代价的软缓冲范围。
 - `allow_unknown: false` 控制全局规划器能否穿过未知区域；`track_unknown_space: true` 控制代价地图是否保存未知区域，两者作用不同。
 - `transform_tolerance` 在 AMCL 和 costmap 中分别服务不同节点，虽然数值相同，也不能合并为同一个参数。

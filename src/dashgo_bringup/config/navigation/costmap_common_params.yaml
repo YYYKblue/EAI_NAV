@@ -66,5 +66,5 @@ obstacle_layer:
 
 inflation_layer:
   enabled: true                     # 启用障碍物膨胀图层。
-  inflation_radius: 0.2             # 障碍物周围产生膨胀代价的最大距离，单位 m。
-  cost_scaling_factor: 10.0         # 膨胀代价衰减系数；越大，代价随距离下降越快。
+  inflation_radius: 0.50            # 软代价影响到障碍物外 0.50 m，引导全局路径远离墙壁。
+  cost_scaling_factor: 3.0          # 降低衰减速度，使全局路径更倾向通道中央。

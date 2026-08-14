@@ -29,7 +29,8 @@ TebLocalPlannerROS:
   free_goal_vel: false               # false：到达目标时必须把速度降为零。
 
   # 障碍物处理
-  min_obstacle_dist: 0.30            # 机器人外轮廓与障碍物的期望最小间距，单位 m。
+  min_obstacle_dist: 0.15            # 机器人外轮廓与障碍物的期望最小间距，单位 m。
+  inflation_dist: 0.30               # 在最小间距之外继续施加较弱避障代价的范围，单位 m。
   include_costmap_obstacles: true    # 将局部代价地图障碍物加入 TEB 优化。
   costmap_obstacles_behind_robot_dist: 1.0 # 纳入机器人后方障碍物的最大距离，单位 m。
   obstacle_poses_affected: 7         # 单个障碍物影响的相邻轨迹位姿数量。
@@ -49,6 +50,7 @@ TebLocalPlannerROS:
   weight_kinematics_turning_radius: 1 # 最小转弯半径约束权重。
   weight_optimaltime: 1              # 缩短轨迹总时间的优化权重。
   weight_obstacle: 50                # 远离代价地图障碍物的优化权重。
+  weight_inflation: 0.1              # TEB 软膨胀区的惩罚权重，应明显小于 weight_obstacle。
 
   # 当前关闭多拓扑路径搜索，仅优化一条轨迹。
   enable_homotopy_class_planning: false # true 时才需要配置 Homotopy 参数组。
