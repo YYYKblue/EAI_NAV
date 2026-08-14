@@ -23,31 +23,9 @@
     <remap from="scan" to="scan" /> <!-- AMCL 使用 /scan 作为定位激光。 -->
   </node>
 
-  <node name="move_base" pkg="move_base" type="move_base"
-        output="screen" respawn="true" clear_params="true">
-    <rosparam command="load" ns="global_costmap"
-              file="$(find dashgo_bringup)/config/navigation/costmap_common_params.yaml" />
-    <rosparam command="load" ns="local_costmap"
-              file="$(find dashgo_bringup)/config/navigation/costmap_common_params.yaml" />
-    <rosparam command="load" file="$(find dashgo_bringup)/config/navigation/local_costmap_params.yaml" />
-    <rosparam command="load" file="$(find dashgo_bringup)/config/navigation/global_costmap_params.yaml" />
-    <rosparam command="load" file="$(find dashgo_bringup)/config/navigation/global_planner_params.yaml" />
-    <rosparam command="load" file="$(find dashgo_bringup)/config/navigation/teb_local_planner_params.yaml" />
-    <rosparam command="load" file="$(find dashgo_bringup)/config/navigation/move_base_params.yaml" />
-  </node>
-
-  <group if="$(arg safety_filters)">
-    <node pkg="dashgo_bringup" type="laser_safety_gate.py"
-          name="laser_safety_gate" output="screen">
-      <rosparam command="load" file="$(find dashgo_bringup)/config/safety/box_filter.yaml" />
-    </node>
-    <node pkg="dashgo_bringup" type="laser_safety_gate.py"
-          name="laser_safety_gate_2" output="screen">
-      <rosparam command="load" file="$(find dashgo_bringup)/config/safety/box_filter_2.yaml" />
-      <remap from="scan" to="scan_2" />
-      <remap from="is_passed" to="is_passed_2" />
-    </node>
-  </group>
+  <include file="$(find dashgo_bringup)/launch/move_base.launch">
+    <arg name="safety_filters" value="$(arg safety_filters)" />
+  </include>
 
   <include if="$(arg rviz)" file="$(find dashgo_bringup)/launch/rviz.launch" />
 </launch>

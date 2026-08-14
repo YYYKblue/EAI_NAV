@@ -1,6 +1,22 @@
 # Dashgo navigation 参数说明
 
-`navigation.launch` 启动 `map_server`、`amcl` 和 `move_base`，并按需启动激光安全过滤节点与 RViz。各 YAML 已在参数旁添加简短中文说明，本页用于说明文件职责和参数加载关系。
+`navigation.launch` 启动 `map_server`、`amcl` 和 `move_base`；`mapping_navigation.launch` 使用 `gmapping` 代替 `map_server + amcl`，在建图的同时启动 `move_base`。两者均可按需启动激光安全过滤节点与 RViz。各 YAML 已在参数旁添加简短中文说明，本页用于说明文件职责和参数加载关系。
+
+## 启动方式
+
+使用已有地图进行 AMCL 定位导航：
+
+```bash
+roslaunch dashgo_bringup navigation.launch rviz:=true
+```
+
+使用 gmapping 边建图边导航：
+
+```bash
+roslaunch dashgo_bringup mapping_navigation.launch rviz:=true
+```
+
+建图导航模式不会启动 `map_server` 或 `amcl`，避免它们与 gmapping 重复发布地图或 `map -> odom_combined` TF。此模式只能规划到当前地图中已经观测为自由空间的区域；当前 `allow_unknown: false` 不允许全局路径穿越未知区域。
 
 ## 文件职责
 
@@ -11,6 +27,7 @@
 - `global_planner_params.yaml`：`global_planner/GlobalPlanner` 的搜索与路径提取参数。
 - `teb_local_planner_params.yaml`：TEB 轨迹、运动约束、避障和优化权重。
 - `move_base_params.yaml`：规划器选择、线程频率、振荡检测和恢复行为。
+- `move_base.launch`：供纯导航与建图导航共同复用的 move_base 和安全节点启动片段。
 
 ## Costmap 参数加载关系
 

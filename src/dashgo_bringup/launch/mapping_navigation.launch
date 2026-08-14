@@ -1,0 +1,23 @@
+<launch>
+  <!-- gmapping 使用主激光建图；move_base 可同时在已经建立的区域内导航。 -->
+  <arg name="scan_topic" default="scan" />
+  <arg name="safety_filters" default="true" />
+  <arg name="rviz" default="false" />
+
+  <!-- mapping.launch 负责底盘、传感器、里程计融合和 gmapping。
+       此处关闭其 RViz，避免与本文件末尾重复启动。 -->
+  <include file="$(find dashgo_bringup)/launch/mapping.launch">
+    <arg name="scan_topic" value="$(arg scan_topic)" />
+    <arg name="base_frame" value="base_footprint" />
+    <arg name="odom_frame" value="odom_combined" />
+    <arg name="map_frame" value="map" />
+    <arg name="rviz" value="false" />
+  </include>
+
+  <!-- 不启动 map_server 和 AMCL：/map 与 map->odom_combined 均由 gmapping 提供。 -->
+  <include file="$(find dashgo_bringup)/launch/move_base.launch">
+    <arg name="safety_filters" value="$(arg safety_filters)" />
+  </include>
+
+  <include if="$(arg rviz)" file="$(find dashgo_bringup)/launch/rviz.launch" />
+</launch>
