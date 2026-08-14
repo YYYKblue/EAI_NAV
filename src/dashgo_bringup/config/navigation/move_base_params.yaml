@@ -1,54 +1,29 @@
-shutdown_costmaps: false
+# 规划器插件选择
+base_global_planner: global_planner/GlobalPlanner       # 全局路径规划插件。
+base_local_planner: teb_local_planner/TebLocalPlannerROS # 局部轨迹规划与速度控制插件。
 
-controller_frequency: 4.0
-controller_patience: 3.0 # 3.0
+# 全局规划线程
+planner_frequency: 1.0               # 周期性重新全局规划的频率，单位 Hz；0 表示仅按需规划。
+planner_patience: 3.0                 # 一次规划持续失败多久后触发恢复行为，单位 s。
+max_planning_retries: 1              # 触发恢复前允许的规划失败次数；-1 表示无限重试。
 
-planner_frequency: 1.0
-planner_patience: 3.0
+# 局部控制线程
+controller_frequency: 4.0            # 计算并发布速度命令的频率，单位 Hz。
+controller_patience: 3.0             # 局部规划持续失败多久后触发恢复行为，单位 s。
+shutdown_costmaps: false             # 机器人非导航状态下仍保持代价地图运行。
 
-oscillation_timeout: 5.0
-oscillation_distance: 0.2
+# 振荡检测
+oscillation_timeout: 5.0             # 在限定范围内停留超过该时间则判定振荡，单位 s。
+oscillation_distance: 0.2            # 移动超过该距离后重置振荡计时，单位 m。
 
-# Planner selection
-base_global_planner: "global_planner/GlobalPlanner"  
-base_local_planner: "teb_local_planner/TebLocalPlannerROS"
-
-max_planning_retries: 1
-
-recovery_behavior_enabled: true
-clearing_rotation_allowed: true
-
-recovery_behaviors:
- #- name: 'conservative_reset'
-  #  type: 'clear_costmap_recovery/ClearCostmapRecovery'
-  - name: 'aggressive_reset'
-    type: 'clear_costmap_recovery/ClearCostmapRecovery'
-  #- name: 'super_reset'
-   # type: 'clear_costmap_recovery/ClearCostmapRecovery'
-  - name: 'clearing_rotation'
-    type: 'rotate_recovery/RotateRecovery'
-  #- name: 'move_slow_and_clear'
-    #type: 'move_slow_and_clear/MoveSlowAndClear'
-    
-conservative_reset:
-  reset_distance: 3.0
-  #layer_names: [static_layer, obstacle_layer, inflation_layer]
-  layer_names: [obstacle_layer]
+# 恢复行为
+recovery_behavior_enabled: true      # 规划或控制失败时允许执行恢复行为。
+recovery_behaviors:                  # 按顺序清除障碍物层窗口外数据，再原地旋转清除周边。
+  - name: aggressive_reset           # 恢复行为实例名；下面同名配置块归它使用。
+    type: clear_costmap_recovery/ClearCostmapRecovery # 清除指定代价地图图层的插件。
+  - name: clearing_rotation          # 原地旋转恢复行为实例名。
+    type: rotate_recovery/RotateRecovery # 旋转并利用传感器清除周围障碍物的插件。
 
 aggressive_reset:
-  reset_distance: 1.3
-  #layer_names: [static_layer, obstacle_layer, inflation_layer]
-  layer_names: [obstacle_layer]
-
-super_reset:
-  reset_distance: 5.0
-  #layer_names: [static_layer, obstacle_layer, inflation_layer]
-  layer_names: [obstacle_layer]
-
-move_slow_and_clear:
-  clearing_distance: 0.5
-  limited_trans_speed: 0.1
-  limited_rot_speed: 0.4
-  limited_distance: 0.3
-
-
+  reset_distance: 1.3                # 保留以机器人为中心、边长为该值的窗口，清除窗口外数据，单位 m。
+  layer_names: [obstacle_layer]      # 只清除实时障碍物层，不清除静态地图层。

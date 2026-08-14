@@ -1,28 +1,35 @@
-use_map_topic: true
-odom_model_type: diff
-odom_alpha1: 0.2
-odom_alpha2: 0.2
-odom_alpha3: 0.8
-odom_alpha4: 0.2
-odom_alpha5: 0.1
-gui_publish_rate: 10.0
-laser_max_beams: 60
-laser_max_range: 6.0
-min_particles: 2000
-max_particles: 5000
-kld_err: 0.05
-kld_z: 0.99
-laser_z_hit: 0.5
-laser_z_short: 0.05
-laser_z_max: 0.05
-laser_z_rand: 0.5
-laser_sigma_hit: 0.2
-laser_lambda_short: 0.1
-laser_model_type: likelihood_field
-laser_likelihood_max_dist: 2.0
-update_min_d: 0.25
-update_min_a: 0.2
-resample_interval: 0.5
-transform_tolerance: 1.0
-recovery_alpha_slow: 0.0
-recovery_alpha_fast: 0.0
+# 地图与坐标系
+use_map_topic: true                 # true：通过 /map 话题获取地图，而不是调用静态地图服务。
+odom_model_type: diff               # 使用差速底盘运动模型；可选 diff、omni 等。
+
+# 里程计运动模型噪声。数值越大，AMCL 对对应运动误差越不信任。
+odom_alpha1: 0.2                    # 旋转运动引入的旋转噪声。
+odom_alpha2: 0.2                    # 平移运动引入的旋转噪声。
+odom_alpha3: 0.8                    # 平移运动引入的平移噪声。
+odom_alpha4: 0.2                    # 旋转运动引入的平移噪声。
+
+# 粒子滤波
+min_particles: 2000                 # KLD 自适应采样允许的最少粒子数。
+max_particles: 5000                 # KLD 自适应采样允许的最多粒子数。
+kld_err: 0.05                       # KLD 采样允许的最大误差；越小通常需要越多粒子。
+kld_z: 0.99                         # KLD 采样置信度分位数。
+resample_interval: 2                # 每累计 2 次滤波更新执行一次重采样，必须为整数。
+
+# 激光观测模型
+laser_model_type: likelihood_field  # 使用似然场模型匹配激光点与地图障碍物。
+laser_max_beams: 60                 # 每帧扫描最多抽取的激光束数量。
+laser_max_range: 6.0                # 参与定位计算的最大激光距离，单位 m。
+laser_z_hit: 0.5                    # 激光命中地图障碍物的模型权重。
+laser_z_rand: 0.5                   # 随机测量模型权重。
+laser_sigma_hit: 0.2                # 命中模型高斯分布标准差，单位 m。
+laser_likelihood_max_dist: 2.0      # 似然场计算到最近障碍物的最大距离，单位 m。
+
+# 更新与发布
+update_min_d: 0.25                  # 机器人至少平移该距离后才更新滤波器，单位 m。
+update_min_a: 0.2                   # 机器人至少旋转该角度后才更新滤波器，单位 rad。
+gui_publish_rate: 10.0              # 粒子云等可视化信息发布频率，单位 Hz。
+transform_tolerance: 1.0            # 发布 map->odom 变换时向未来容忍的时间，单位 s。
+
+# 自适应恢复；两个值均为 0 时禁用随机粒子注入恢复。
+recovery_alpha_slow: 0.0            # 慢速平均似然更新系数。
+recovery_alpha_fast: 0.0            # 快速平均似然更新系数。

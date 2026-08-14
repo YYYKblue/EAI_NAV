@@ -1,0 +1,10 @@
+# global_planner/GlobalPlanner 参数。
+GlobalPlanner:
+  old_navfn_behavior: false          # false：使用 GlobalPlanner 的修正行为；true：尽量复现旧 navfn。
+  use_quadratic: true                # 使用二次函数计算势场，路径通常更平滑。
+  use_dijkstra: true                 # true：Dijkstra；false：A*。
+  use_grid_path: false               # false：梯度下降提取路径；true：沿栅格边界提取。
+  allow_unknown: false               # 禁止全局路径穿过未知区域。
+  planner_window_x: 0.0              # 规划窗口 X 尺寸；0 表示使用完整全局代价地图。
+  planner_window_y: 0.0              # 规划窗口 Y 尺寸；0 表示使用完整全局代价地图。
+  default_tolerance: 0.0             # 目标不可达时可接受的邻近终点半径，0 表示不放宽，单位 m。

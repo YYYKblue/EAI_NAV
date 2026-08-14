@@ -1,77 +1,54 @@
 TebLocalPlannerROS:
+  # 坐标与里程计
+  odom_topic: odom                   # TEB 获取机器人速度的里程计话题。
+  map_frame: /odom_combined          # TEB 内部轨迹和障碍物使用的参考坐标系。
 
- odom_topic: odom
- #odom_topic: /robot_pose_ekf/odom_combined
- #map_frame: /odom
- map_frame: /odom_combined
+  # 轨迹离散与全局路径处理
+  teb_autosize: true                 # 自动增减轨迹位姿，使时间间隔接近 dt_ref。
+  dt_ref: 0.45                       # 相邻轨迹位姿期望时间间隔，单位 s。
+  dt_hysteresis: 0.1                 # 调整轨迹采样数量时的时间滞回量，单位 s。
+  global_plan_overwrite_orientation: true # 用局部路径方向覆盖全局路径点的朝向。
+  max_global_plan_lookahead_dist: 3.0 # 从全局路径截取给 TEB 的最大前视距离，单位 m。
+  feasibility_check_no_poses: 5      # 每周期向前检查碰撞可行性的轨迹位姿数量。
 
- # Trajectory
+  # 差速机器人速度与加速度约束
+  max_vel_x: 0.6                     # 最大前进线速度，单位 m/s。
+  max_vel_x_backwards: 0.15          # 最大后退线速度绝对值，单位 m/s。
+  max_vel_theta: 0.30                # 最大角速度，单位 rad/s。
+  acc_lim_x: 0.30                    # 最大线加速度绝对值，单位 m/s^2。
+  acc_lim_theta: 0.30                # 最大角加速度绝对值，单位 rad/s^2。
+  min_turning_radius: 0.0            # 最小转弯半径；0 表示差速底盘可原地转动。
+  footprint_model:
+    type: polygon                    # 使用多边形机器人模型，而不是默认点模型。
+    vertices:                        # 必须与 costmap footprint 保持一致，单位 m。
+      [[-0.283, -0.283], [-0.283, 0.283], [0.283, 0.283], [0.283, -0.283]]
 
- teb_autosize: True
- dt_ref: 0.45
- dt_hysteresis: 0.1
- global_plan_overwrite_orientation: True
- max_global_plan_lookahead_dist: 3.0
- feasibility_check_no_poses: 5
+  # 到达目标判定
+  xy_goal_tolerance: 0.2             # 目标位置允许误差，单位 m。
+  yaw_goal_tolerance: 0.5            # 目标朝向允许误差，单位 rad。
+  free_goal_vel: false               # false：到达目标时必须把速度降为零。
 
- # Robot
+  # 障碍物处理
+  min_obstacle_dist: 0.30            # 机器人外轮廓与障碍物的期望最小间距，单位 m。
+  include_costmap_obstacles: true    # 将局部代价地图障碍物加入 TEB 优化。
+  costmap_obstacles_behind_robot_dist: 1.0 # 纳入机器人后方障碍物的最大距离，单位 m。
+  obstacle_poses_affected: 7         # 单个障碍物影响的相邻轨迹位姿数量。
 
- max_vel_x: 0.6
- max_vel_x_backwards: 0.15
- max_vel_theta: 0.30
- acc_lim_x: 0.30
- acc_lim_theta: 0.30
- min_turning_radius: 0.0
- footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
-   #radius: 0.314 # for type "circular"
-   #vertices: [[-0.1, -0.26], [-0.1, 0.26],[0.287, 0.26], [0.287, -0.26]]
-   vertices: [[-0.283, -0.283], [-0.283, 0.283],[0.283, 0.283], [0.283, -0.283]]
+  # 数值优化
+  no_inner_iterations: 5             # 每个外层循环中的优化迭代次数。
+  no_outer_iterations: 4             # 每周期执行的外层优化循环次数。
+  optimization_activate: true        # 启用轨迹图优化。
+  optimization_verbose: false        # 不输出详细优化调试信息。
+  penalty_epsilon: 0.1               # 约束惩罚函数的软化范围。
+  weight_max_vel_x: 1                # 线速度上限约束权重。
+  weight_max_vel_theta: 1            # 角速度上限约束权重。
+  weight_acc_lim_x: 1                # 线加速度约束权重。
+  weight_acc_lim_theta: 1            # 角加速度约束权重。
+  weight_kinematics_nh: 1000         # 非完整约束权重，差速底盘应保持较大。
+  weight_kinematics_forward_drive: 100 # 偏好向前行驶、抑制倒车的权重。
+  weight_kinematics_turning_radius: 1 # 最小转弯半径约束权重。
+  weight_optimaltime: 1              # 缩短轨迹总时间的优化权重。
+  weight_obstacle: 50                # 远离代价地图障碍物的优化权重。
 
- # GoalTolerance
-
- xy_goal_tolerance: 0.2
- yaw_goal_tolerance: 0.5
- free_goal_vel: False
-
- # Obstacles
-
- min_obstacle_dist: 0.30
- include_costmap_obstacles: True
- costmap_obstacles_behind_robot_dist: 1.0
- obstacle_poses_affected: 7
- costmap_converter_plugin: ""
- costmap_converter_spin_thread: True
- costmap_converter_rate: 5
-
- # Optimization
-
- no_inner_iterations: 5
- no_outer_iterations: 4
- optimization_activate: True
- optimization_verbose: False
- penalty_epsilon: 0.1
- weight_max_vel_x: 1
- weight_max_vel_theta: 1
- weight_acc_lim_x: 1
- weight_acc_lim_theta: 1
- weight_kinematics_nh: 1000
- weight_kinematics_forward_drive: 100
- weight_kinematics_turning_radius: 1
- weight_optimaltime: 1
- weight_obstacle: 50
- weight_dynamic_obstacle: 10 # not in use yet
- selection_alternative_time_cost: False # not in use yet
-
- # Homotopy Class Planner
-
- enable_homotopy_class_planning: False
- enable_multithreading: True
- simple_exploration: False
- max_number_classes: 4
- roadmap_graph_no_samples: 15
- roadmap_graph_area_width: 5
- h_signature_prescaler: 0.5
- h_signature_threshold: 0.1
- obstacle_keypoint_offset: 0.1
- obstacle_heading_threshold: 0.45
- visualize_hc_graph: False
+  # 当前关闭多拓扑路径搜索，仅优化一条轨迹。
+  enable_homotopy_class_planning: false # true 时才需要配置 Homotopy 参数组。
