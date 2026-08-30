@@ -1,5 +1,7 @@
 # Dashgo navigation 参数说明
 
+> 更完整的逐 YAML、逐参数文档见 [`../../docs/configuration/README.md`](../../docs/configuration/README.md)。其中包含机器人多边形推导、Gmapping、安全框、地图元数据、配置风险和实机验证方法。本页保留为导航配置速查。
+
 `navigation.launch` 启动 `map_server`、`amcl` 和 `move_base`；`mapping_navigation.launch` 使用 `gmapping` 代替 `map_server + amcl`，在建图的同时启动 `move_base`。两者均可按需启动激光安全过滤节点与 RViz。各 YAML 已在参数旁添加简短中文说明，本页用于说明文件职责和参数加载关系。
 
 ## 启动方式
