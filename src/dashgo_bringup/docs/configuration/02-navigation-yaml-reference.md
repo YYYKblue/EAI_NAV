@@ -81,7 +81,7 @@ global_frame_id = map
 
 | 参数 | 当前值 | 类型/单位 | 详细含义与当前效果 |
 |---|---:|---|---|
-| `robot_base_frame` | `/base_footprint` | frame ID | Costmap 查询机器人位姿、解释 footprint 的机器人坐标系。必须能从各自 `global_frame` 通过 TF 到达。建议后续统一去掉前导 `/`。 |
+| `robot_base_frame` | `base_footprint` | frame ID | Costmap 查询机器人位姿、解释 footprint 的机器人坐标系。必须能从各自 `global_frame` 通过 TF 到达。TF frame ID 不使用前导 `/`。 |
 | `resolution` | `0.05` | m/cell | 两套代价地图每个栅格边长 5 cm。值更小轮廓精细但内存和更新计算按面积快速增加；值更大会损失窄通道和小障碍细节。静态地图本身也是 0.05 m/cell。 |
 | `transform_tolerance` | `1.0` | s | Costmap 可容忍的 TF 数据延迟。它和 AMCL 的同名参数属于不同节点，不能互相替代。持续需要 1 s 才能工作通常说明时间戳或处理延迟需要排查。 |
 | `footprint` | 四点 polygon | m | 相对 `base_footprint` 的二维闭合外轮廓，当前为 `0.566 m × 0.566 m` 正方形。详见 [01 文档](01-robot-footprint-and-frames.md)。配置 footprint 后不再使用圆形 `robot_radius`。 |
@@ -184,7 +184,7 @@ global_frame_id = map
 
 | 参数 | 当前值 | 类型/单位 | 详细含义与当前效果 |
 |---|---:|---|---|
-| `global_costmap/global_frame` | `/map` | frame ID | 全局代价地图固定坐标系。AMCL 或 Gmapping 必须提供从 `map` 到机器人链路的 TF。 |
+| `global_costmap/global_frame` | `map` | frame ID | 全局代价地图固定坐标系。AMCL 或 Gmapping 必须提供从 `map` 到机器人链路的 TF。 |
 | `global_costmap/update_frequency` | `1.5` | Hz | 图层融合和地图内部更新每秒约 1.5 次，即周期约 0.667 s。动态障碍进入全局重规划的速度受此限制。 |
 | `global_costmap/publish_frequency` | `1.0` | Hz | 对外发布完整/显示用 Costmap 的频率。发布频率低于更新频率不会阻止内部规划使用最新地图。 |
 | `global_costmap/rolling_window` | `false` | bool | 使用固定地图范围，通常从 `/map` 获得尺寸和原点；不会始终以机器人为中心滚动。 |
@@ -195,7 +195,7 @@ global_frame_id = map
 
 | 参数 | 当前值 | 类型/单位 | 详细含义与当前效果 |
 |---|---:|---|---|
-| `local_costmap/global_frame` | `/odom_combined` | frame ID | 局部地图的固定坐标系。里程计连续，适合短时间轨迹控制；AMCL 校正由更上层 `map -> odom_combined` 吸收。必须与 TEB `map_frame` 保持一致。 |
+| `local_costmap/global_frame` | `odom_combined` | frame ID | 局部地图的固定坐标系。里程计连续，适合短时间轨迹控制；AMCL 校正由更上层 `map -> odom_combined` 吸收。必须与 TEB `map_frame` 保持一致。 |
 | `local_costmap/update_frequency` | `3.0` | Hz | 局部障碍地图每约 0.333 s 更新一次。当前略低于 4 Hz 控制循环，部分控制周期会复用上一版地图。 |
 | `local_costmap/publish_frequency` | `1.0` | Hz | RViz/话题发布频率，不代表内部只每秒更新一次。 |
 | `local_costmap/rolling_window` | `true` | bool | 局部窗口随机器人移动，避免建立无限大的高频局部地图。 |
@@ -270,7 +270,7 @@ global_frame_id = map
 | 参数 | 当前值 | 类型 | 详细含义与当前效果 |
 |---|---|---|---|
 | `TebLocalPlannerROS/odom_topic` | `odom` | topic | TEB 获取当前机器人速度的里程计话题。相对话题名在当前启动结构中预期解析到 `/odom`；可用 `rosnode info /move_base` 核对实际 resolved topic。Costmap 位姿则来自 `odom_combined` TF，两者角色不同。 |
-| `TebLocalPlannerROS/map_frame` | `/odom_combined` | frame ID | TEB 内部轨迹、全局计划和障碍物变换使用的参考 frame，与局部 Costmap `global_frame` 一致。 |
+| `TebLocalPlannerROS/map_frame` | `odom_combined` | frame ID | TEB 内部轨迹、全局计划和障碍物变换使用的参考 frame，与局部 Costmap `global_frame` 一致。 |
 
 ### 7.2 轨迹离散和全局路径截取
 
@@ -362,4 +362,3 @@ global_frame_id = map
 ```
 
 规划输出随后由 `base.launch` 中的 `yocs_velocity_smoother` 处理，再发给底盘。TEB YAML 只是“希望发送的运动上限”，不自动证明底盘能达到或准确跟踪这些数值。
-

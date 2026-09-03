@@ -1,6 +1,6 @@
 # 局部代价地图只保留与全局代价地图不同的参数。
 local_costmap:
-  global_frame: /odom_combined      # 局部地图使用连续的里程计坐标系，避免定位修正造成跳变。
+  global_frame: odom_combined       # 局部地图使用连续的里程计坐标系，避免定位修正造成跳变。
   update_frequency: 3.0             # 地图内部更新频率，单位 Hz。
   publish_frequency: 1.0            # 完整代价地图发布频率，单位 Hz。
   rolling_window: true              # 以机器人为中心滚动局部窗口。

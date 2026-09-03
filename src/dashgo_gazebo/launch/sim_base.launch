@@ -1,0 +1,21 @@
+<launch>
+  <arg name="world" default="$(find dashgo_gazebo)/worlds/robocup_home.world" />
+  <arg name="gui" default="true" />
+  <arg name="paused" default="false" />
+  <arg name="rviz" default="false" />
+
+  <include file="$(find dashgo_gazebo)/launch/sim_robot.launch">
+    <arg name="world" value="$(arg world)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)" />
+  </include>
+
+  <include file="$(find dashgo_bringup)/launch/base.launch">
+    <arg name="use_driver" value="false" />
+    <arg name="use_lidars" value="false" />
+    <arg name="use_description" value="false" />
+  </include>
+
+  <include if="$(arg rviz)" file="$(find dashgo_bringup)/launch/rviz.launch" />
+</launch>
+

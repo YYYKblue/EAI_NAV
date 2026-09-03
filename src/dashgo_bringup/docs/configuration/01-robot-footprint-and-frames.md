@@ -148,13 +148,13 @@ map
 | 模块 | 固定/参考坐标系 | 原因 |
 |---|---|---|
 | AMCL | `map` | 在静态地图中定位并校正里程计漂移 |
-| 全局 Costmap | `/map` | 路径要固定在地图坐标系中 |
-| 局部 Costmap | `/odom_combined` | 里程计连续，避免 AMCL 修正引起局部轨迹跳变 |
-| TEB | `/odom_combined` | 与局部 Costmap 一致 |
-| footprint | `/base_footprint` | 外形随机器人运动 |
+| 全局 Costmap | `map` | 路径要固定在地图坐标系中 |
+| 局部 Costmap | `odom_combined` | 里程计连续，避免 AMCL 修正引起局部轨迹跳变 |
+| TEB | `odom_combined` | 与局部 Costmap 一致 |
+| footprint | `base_footprint` | 外形随机器人运动 |
 | 安全框 | `base_footprint` | 安全区域固定在机器人周围 |
 
-配置中有些 frame 写成 `/map`，有些写成 `map`。ROS1 的部分 TF 接口会去掉前导 `/`，当前通常仍可工作，但新配置建议统一使用无前导斜杠的 frame ID，以避免不同库处理方式不一致。
+当前 frame ID 已统一为不带前导斜杠的 `map`、`odom_combined` 和 `base_footprint`。话题 `/map`、`/scan` 中的前导斜杠仍保留；frame ID 与 topic 名不要混淆。
 
 ## 8. 三台激光与高度窗口
 

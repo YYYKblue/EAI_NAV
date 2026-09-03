@@ -1,7 +1,7 @@
 TebLocalPlannerROS:
   # 坐标与里程计
   odom_topic: odom                   # TEB 获取机器人速度的里程计话题。
-  map_frame: /odom_combined          # TEB 内部轨迹和障碍物使用的参考坐标系。
+  map_frame: odom_combined           # TEB 内部轨迹和障碍物使用的参考坐标系。
 
   # 轨迹离散与全局路径处理
   teb_autosize: true                 # 自动增减轨迹位姿，使时间间隔接近 dt_ref。

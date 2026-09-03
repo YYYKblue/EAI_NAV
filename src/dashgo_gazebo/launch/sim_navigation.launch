@@ -1,0 +1,33 @@
+<launch>
+  <arg name="world" default="$(find dashgo_gazebo)/worlds/robocup_home.world" />
+  <arg name="map_file" default="$(find dashgo_gazebo)/maps/navigation_test.yaml" />
+  <arg name="gui" default="true" />
+  <arg name="paused" default="false" />
+  <arg name="rviz" default="true" />
+  <arg name="safety_filters" default="true" />
+  <arg name="initial_pose_x" default="-2.0" />
+  <arg name="initial_pose_y" default="-2.0" />
+  <arg name="initial_pose_a" default="0.0" />
+
+  <include file="$(find dashgo_gazebo)/launch/sim_robot.launch">
+    <arg name="world" value="$(arg world)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)" />
+    <arg name="x" value="$(arg initial_pose_x)" />
+    <arg name="y" value="$(arg initial_pose_y)" />
+    <arg name="yaw" value="$(arg initial_pose_a)" />
+  </include>
+
+  <include file="$(find dashgo_bringup)/launch/navigation.launch">
+    <arg name="map_file" value="$(arg map_file)" />
+    <arg name="initial_pose_x" value="$(arg initial_pose_x)" />
+    <arg name="initial_pose_y" value="$(arg initial_pose_y)" />
+    <arg name="initial_pose_a" value="$(arg initial_pose_a)" />
+    <arg name="safety_filters" value="$(arg safety_filters)" />
+    <arg name="rviz" value="$(arg rviz)" />
+    <arg name="use_driver" value="false" />
+    <arg name="use_lidars" value="false" />
+    <arg name="use_description" value="false" />
+  </include>
+</launch>
+

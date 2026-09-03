@@ -4,8 +4,15 @@
   <arg name="base_frame" default="base_footprint" />
   <arg name="odom_frame" default="odom_combined" />
   <arg name="map_frame" default="map" />
+  <arg name="use_driver" default="true" />
+  <arg name="use_lidars" default="true" />
+  <arg name="use_description" default="true" />
 
-  <include file="$(find dashgo_bringup)/launch/base.launch" />
+  <include file="$(find dashgo_bringup)/launch/base.launch">
+    <arg name="use_driver" value="$(arg use_driver)" />
+    <arg name="use_lidars" value="$(arg use_lidars)" />
+    <arg name="use_description" value="$(arg use_description)" />
+  </include>
 
   <node pkg="gmapping" type="slam_gmapping" name="slam_gmapping"
         output="screen" respawn="true">

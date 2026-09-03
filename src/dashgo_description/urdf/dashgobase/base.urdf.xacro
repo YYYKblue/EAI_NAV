@@ -7,9 +7,11 @@
   <xacro:property name="base_y" value="0.40" />
   <xacro:property name="base_length" value="0.20" />
   <xacro:property name="wheel_length" value="0.046" />
-  <xacro:property name="wheel_radius" value="0.062" />
+  <!-- Keep the displayed/physical wheel geometry aligned with the calibrated
+       values used by dashgo_driver/config/base.yaml. -->
+  <xacro:property name="wheel_radius" value="0.074" />
   <xacro:property name="wheel_offset_x" value="-0.08" />
-  <xacro:property name="wheel_offset_y" value="0.176" />
+  <xacro:property name="wheel_offset_y" value="0.2225" />
   <xacro:property name="wheel_offset_z" value="-0.038" />
   
   <xacro:property name="PI" value="3.1415926" />
@@ -19,8 +21,12 @@
     <joint name="${parent}_${suffix}_wheel_joint" type="continuous">
       <axis xyz="0 0 1" />
       <limit effort="100" velocity="100"/>
+      <dynamics damping="0.2" friction="0.05" />
       <safety_controller k_velocity="10" />
-      <origin xyz="${wheel_offset_x} ${reflect*wheel_offset_y} ${wheel_offset_z}" rpy="${reflect*PI/2} 0 0" />
+      <!-- Both wheel joint axes must point in the same base-frame direction;
+           mirroring the cylinder rotation would make equal Gazebo wheel
+           velocities rotate the chassis instead of driving it straight. -->
+      <origin xyz="${wheel_offset_x} ${reflect*wheel_offset_y} ${wheel_offset_z}" rpy="${-PI/2} 0 0" />
       <parent link="${parent}_link"/>
       <child link="${parent}_${suffix}_wheel_link"/>
     </joint>
@@ -42,6 +48,20 @@
         </geometry>
         <material name="${color}" />
       </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_length}"/>
+        </geometry>
+      </collision>
+      <!-- Idealized wheel mass/inertia for Gazebo. The measured drivetrain
+           dimensions above remain the parameters relevant to kinematics. -->
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.5" />
+        <inertia ixx="0.001011" ixy="0" ixz="0"
+                 iyy="0.001011" iyz="0" izz="0.001369" />
+      </inertial>
     </link>
   </xacro:macro>
 
@@ -67,7 +87,7 @@
             <geometry>
                 <box size="${base_x} ${base_y} ${base_length}"/>
             </geometry>
-            <material name="iRobot/LightGrey"/>
+            <material name="Grey"/>
         </visual>
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -75,6 +95,14 @@
                  <box size="${base_x} ${base_y} ${base_length}"/>
             </geometry>
         </collision>
+        <!-- Idealized chassis mass/inertia. Replace these values when measured
+             data is available; dimensions intentionally retain the old box. -->
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="20.0"/>
+            <inertia ixx="0.333333" ixy="0" ixz="0"
+                     iyy="0.333333" iyz="0" izz="0.533333"/>
+        </inertial>
     </link>
   </xacro:macro>
   

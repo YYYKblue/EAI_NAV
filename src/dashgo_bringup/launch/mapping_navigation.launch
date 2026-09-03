@@ -3,6 +3,9 @@
   <arg name="scan_topic" default="scan" />
   <arg name="safety_filters" default="true" />
   <arg name="rviz" default="false" />
+  <arg name="use_driver" default="true" />
+  <arg name="use_lidars" default="true" />
+  <arg name="use_description" default="true" />
 
   <!-- mapping.launch 负责底盘、传感器、里程计融合和 gmapping。
        此处关闭其 RViz，避免与本文件末尾重复启动。 -->
@@ -12,6 +15,9 @@
     <arg name="odom_frame" value="odom_combined" />
     <arg name="map_frame" value="map" />
     <arg name="rviz" value="false" />
+    <arg name="use_driver" value="$(arg use_driver)" />
+    <arg name="use_lidars" value="$(arg use_lidars)" />
+    <arg name="use_description" value="$(arg use_description)" />
   </include>
 
   <!-- 不启动 map_server 和 AMCL：/map 与 map->odom_combined 均由 gmapping 提供。 -->

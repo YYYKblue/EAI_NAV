@@ -6,8 +6,15 @@
   <arg name="initial_pose_a" default="0.0" /> <!-- 初始航向角，单位 rad。 -->
   <arg name="safety_filters" default="true" /> <!-- 是否启动激光安全过滤节点。 -->
   <arg name="rviz" default="false" /> <!-- 是否随导航启动 RViz。 -->
+  <arg name="use_driver" default="true" /> <!-- false：由仿真底盘提供速度与里程计接口。 -->
+  <arg name="use_lidars" default="true" /> <!-- false：由仿真传感器发布 scan。 -->
+  <arg name="use_description" default="true" /> <!-- false：由仿真模型加载 robot_description。 -->
 
-  <include file="$(find dashgo_bringup)/launch/base.launch" />
+  <include file="$(find dashgo_bringup)/launch/base.launch">
+    <arg name="use_driver" value="$(arg use_driver)" />
+    <arg name="use_lidars" value="$(arg use_lidars)" />
+    <arg name="use_description" value="$(arg use_description)" />
+  </include>
 
   <node name="map_server" pkg="map_server" type="map_server"
         args="$(arg map_file)" output="screen" />

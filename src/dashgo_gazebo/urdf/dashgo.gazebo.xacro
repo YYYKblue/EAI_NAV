@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<robot name="dashgo_sim" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- The shared description contains the 0.40 x 0.40 m chassis, two drive
+       wheels, base frames and RViz visuals. -->
+  <xacro:include filename="$(find dashgo_description)/urdf/dashgobase/dashgobase.xacro" />
+
+  <xacro:property name="support_radius" value="0.025" />
+  <!-- One millimetre above the drive-wheel contact plane. The driven wheels
+       retain traction while a very small chassis pitch brings the passive
+       corner supports into contact. -->
+  <xacro:property name="support_z" value="-0.086" />
+
+  <!-- The real platform has four passive omni wheels at its corners. For 2-D
+       navigation testing they are represented by low-friction spherical
+       contacts: they support the chassis without imposing an unmeasured roller
+       geometry or steering constraint. -->
+  <xacro:macro name="omni_support" params="name x y">
+    <joint name="${name}_joint" type="fixed">
+      <origin xyz="${x} ${y} ${support_z}" rpy="0 0 0" />
+      <parent link="base_link" />
+      <child link="${name}_link" />
+    </joint>
+    <link name="${name}_link">
+      <visual>
+        <geometry><sphere radius="${support_radius}" /></geometry>
+        <material name="DarkGrey" />
+      </visual>
+      <collision>
+        <geometry><sphere radius="${support_radius}" /></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.05" />
+        <inertia ixx="0.0000125" ixy="0" ixz="0"
+                 iyy="0.0000125" iyz="0" izz="0.0000125" />
+      </inertial>
+    </link>
+    <gazebo reference="${name}_link">
+      <mu1>0.01</mu1>
+      <mu2>0.01</mu2>
+      <kp>1000000</kp>
+      <kd>100</kd>
+      <minDepth>0.001</minDepth>
+      <maxVel>0.1</maxVel>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:omni_support name="front_left_omni" x="0.17" y="0.17" />
+  <xacro:omni_support name="front_right_omni" x="0.17" y="-0.17" />
+  <xacro:omni_support name="rear_left_omni" x="-0.17" y="0.17" />
+  <xacro:omni_support name="rear_right_omni" x="-0.17" y="-0.17" />
+
+  <gazebo reference="base_link">
+    <material>Gazebo/Grey</material>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+  <gazebo reference="base_l_wheel_link">
+    <material>Gazebo/Orange</material>
+    <mu1>1.2</mu1>
+    <mu2>1.2</mu2>
+    <kp>1000000</kp>
+    <kd>100</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>0.1</maxVel>
+  </gazebo>
+  <gazebo reference="base_r_wheel_link">
+    <material>Gazebo/Orange</material>
+    <mu1>1.2</mu1>
+    <mu2>1.2</mu2>
+    <kp>1000000</kp>
+    <kd>100</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>0.1</maxVel>
+  </gazebo>
+
+  <xacro:macro name="sim_laser" params="name topic xyz rpy min_angle max_angle samples">
+    <joint name="${name}_joint" type="fixed">
+      <origin xyz="${xyz}" rpy="${rpy}" />
+      <parent link="base_link" />
+      <child link="${name}" />
+    </joint>
+    <link name="${name}">
+      <visual>
+        <geometry><cylinder radius="0.035" length="0.025" /></geometry>
+        <material name="Black" />
+      </visual>
+      <inertial>
+        <mass value="0.02" />
+        <inertia ixx="0.000003" ixy="0" ixz="0"
+                 iyy="0.000003" iyz="0" izz="0.000006" />
+      </inertial>
+    </link>
+    <gazebo reference="${name}_joint">
+      <preserveFixedJoint>true</preserveFixedJoint>
+    </gazebo>
+    <gazebo reference="${name}">
+      <material>Gazebo/Black</material>
+      <sensor name="${name}_sensor" type="ray">
+        <always_on>true</always_on>
+        <update_rate>7</update_rate>
+        <visualize>false</visualize>
+        <pose>0 0 0 0 0 0</pose>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>${samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>${min_angle}</min_angle>
+              <max_angle>${max_angle}</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.08</min>
+            <max>16.0</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.01</stddev>
+          </noise>
+        </ray>
+        <plugin name="${name}_ros" filename="libgazebo_ros_laser.so">
+          <robotNamespace>/</robotNamespace>
+          <topicName>${topic}</topicName>
+          <frameName>${name}</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Poses are expressed relative to base_link. The main/high sensors match
+       the hardware TFs. Gazebo's ray sensor does not filter collisions from its
+       own model, so the low sensor is placed just ahead of the retained chassis
+       box. Its simulated height remains inside the configured 0.01 to 0.10 m
+       obstacle band, but is high enough that a small chassis pitch cannot make
+       the horizontal rays intersect the ground plane. -->
+  <xacro:sim_laser name="laser_frame" topic="scan"
+                   xyz="0.059 -0.176 0.142" rpy="0 0 -0.785"
+                   min_angle="-2.356194" max_angle="2.356194" samples="1080" />
+  <xacro:sim_laser name="laser_frame_2" topic="scan_2"
+                   xyz="0.250 0 -0.070" rpy="0 3.141592654 -3.04"
+                   min_angle="-1.570796" max_angle="1.570796" samples="720" />
+  <xacro:sim_laser name="laser_frame_3" topic="scan_3"
+                   xyz="-0.289 0.176 0.212" rpy="0 0 2.355"
+                   min_angle="-2.356194" max_angle="2.094395" samples="1020" />
+
+  <gazebo reference="base_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>50</update_rate>
+      <visualize>false</visualize>
+      <plugin name="imu_ros" filename="libgazebo_ros_imu_sensor.so">
+        <robotNamespace>/</robotNamespace>
+        <topicName>imu</topicName>
+        <frameName>imu_base</frameName>
+        <updateRateHZ>50.0</updateRateHZ>
+        <gaussianNoise>0.001</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="dashgo_diff_drive" filename="libgazebo_ros_diff_drive.so">
+      <robotNamespace>/</robotNamespace>
+      <rosDebugLevel>na</rosDebugLevel>
+      <alwaysOn>true</alwaysOn>
+      <updateRate>50</updateRate>
+      <leftJoint>base_l_wheel_joint</leftJoint>
+      <rightJoint>base_r_wheel_joint</rightJoint>
+      <wheelSeparation>0.445</wheelSeparation>
+      <wheelDiameter>0.148</wheelDiameter>
+      <wheelAcceleration>0.30</wheelAcceleration>
+      <wheelTorque>20</wheelTorque>
+      <commandTopic>gazebo_cmd_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <odometrySource>encoder</odometrySource>
+      <robotBaseFrame>base_footprint</robotBaseFrame>
+      <!-- publishTf enables odometry publication in this legacy plugin;
+           publishOdomTF below independently prevents a duplicate TF edge. -->
+      <publishTf>true</publishTf>
+      <publishOdomTF>false</publishOdomTF>
+      <publishWheelTF>false</publishWheelTF>
+      <publishWheelJointState>true</publishWheelJointState>
+    </plugin>
+  </gazebo>
+</robot>

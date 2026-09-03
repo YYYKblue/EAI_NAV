@@ -1,0 +1,33 @@
+<launch>
+  <arg name="world" default="$(find dashgo_gazebo)/worlds/navigation_test.world" />
+  <arg name="gui" default="true" />
+  <arg name="paused" default="false" />
+  <arg name="x" default="-2.0" />
+  <arg name="y" default="-2.0" />
+  <arg name="z" default="0.10" />
+  <arg name="yaw" default="0.0" />
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg paused)" />
+    <arg name="use_sim_time" value="true" />
+  </include>
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro '$(find dashgo_gazebo)/urdf/dashgo.gazebo.xacro'" />
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher"
+        type="robot_state_publisher" output="screen">
+    <param name="publish_frequency" value="30.0" />
+  </node>
+
+  <node name="spawn_dashgo" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -param robot_description -model dashgo -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)"
+        output="screen" />
+
+  <node name="sim_safety_cmd_gate" pkg="dashgo_gazebo"
+        type="sim_safety_cmd_gate.py" output="screen">
+    <param name="command_timeout" value="1.0" />
+  </node>
+</launch>
