@@ -5,7 +5,7 @@
   <description>Gazebo Classic simulation and navigation integration for Dashgo.</description>
 
   <maintainer email="bboss@todo.todo">bboss</maintainer>
-  <license>TODO</license>
+  <license>GPLv3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
@@ -20,4 +20,3 @@
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>xacro</exec_depend>
 </package>
-

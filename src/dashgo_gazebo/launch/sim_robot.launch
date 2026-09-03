@@ -1,9 +1,10 @@
 <launch>
-  <arg name="world" default="$(find dashgo_gazebo)/worlds/navigation_test.world" />
+  <arg name="world" default="$(find dashgo_gazebo)/worlds/robocup_home.world" />
+  <arg name="spawn_scene_objects" default="true" />
   <arg name="gui" default="true" />
   <arg name="paused" default="false" />
-  <arg name="x" default="-2.0" />
-  <arg name="y" default="-2.0" />
+  <arg name="x" default="0.0" />
+  <arg name="y" default="0.0" />
   <arg name="z" default="0.10" />
   <arg name="yaw" default="0.0" />
 
@@ -13,6 +14,9 @@
     <arg name="paused" value="$(arg paused)" />
     <arg name="use_sim_time" value="true" />
   </include>
+
+  <include if="$(arg spawn_scene_objects)"
+           file="$(find dashgo_gazebo)/launch/robocup_home_objects.launch" />
 
   <param name="robot_description"
          command="$(find xacro)/xacro '$(find dashgo_gazebo)/urdf/dashgo.gazebo.xacro'" />

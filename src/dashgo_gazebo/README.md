@@ -4,6 +4,10 @@
 Classic 中替代串口底盘与三台真实激光雷达，用于验证建图、定位、全局规划、
 TEB 局部规划及安全停车链路。
 
+RoboCup Home 场景的家具模型、DAE 网格和贴图已经放入本包，不依赖
+`wpr_simulation`。原 `robocup_home.world` 本身只包含地面和墙壁；家具由
+`robocup_home_objects.launch` 在 Gazebo 启动后生成。
+
 ## 模型边界
 
 | 项目 | 仿真取值或实现 | 说明 |
@@ -15,6 +19,7 @@ TEB 局部规划及安全停车链路。
 | 支承轮 | 四角四个低摩擦球形接触体 | 近似真实被动全向轮，不模拟滚子细节 |
 | 质量与惯量 | 车体 `20 kg`，驱动轮 `0.5 kg/个` | 理想值，只用于获得稳定动力学；不能据此验证电机电流、打滑或倾覆 |
 | 传感器 | 三路 2D 激光 + IMU | 话题及 frame 名沿用真机配置 |
+| 默认场景 | RoboCup Home 墙体和家具 | 家具可通过启动参数关闭 |
 
 轮径和轮距同时出现在三个位置，是因为消费者不同：
 
@@ -63,7 +68,21 @@ roslaunch dashgo_gazebo sim_navigation.launch
 ```
 
 无图形界面运行时追加 `gui:=false rviz:=false`。`sim_navigation.launch` 默认在
-`(-2.0, -2.0, 0)` 生成机器人，并加载与测试世界匹配的 8 m x 8 m 栅格地图。
+`(0, 0, 0)` 生成机器人，避免与位于 `(-2.1, -2.2)` 的茶几重叠。四种仿真入口默认加载 `robocup_home.world`，
+并生成床、沙发、茶几、书架、餐桌、柜子和椅子。
+
+如果临时切换到其他 world，应关闭 RoboCup Home 家具：
+
+```bash
+roslaunch dashgo_gazebo sim_base.launch \
+  world:=/absolute/path/to/another.world \
+  spawn_scene_objects:=false
+```
+
+需要注意：`sim_navigation.launch` 当前的默认静态地图仍是
+`maps/navigation_test.yaml`，它不对应 RoboCup Home 场景。在生成并保存
+RoboCup Home 的占据栅格地图之前，应使用 `sim_mapping.launch` 或
+`sim_mapping_navigation.launch`；之后通过 `map_file:=...` 传入新地图。
 
 ## 接口与验证点
 
@@ -96,7 +115,15 @@ rostopic echo /is_passed_2
 rosrun tf tf_echo map base_footprint
 ```
 
-测试世界包含外墙、分隔墙和方形障碍物，可用于规划绕障，但不代表真实场地。
+包内的 `navigation_test.world` 包含外墙、分隔墙和方形障碍物，可用于规划绕障，
+但不代表真实场地。
 当前实测短距离与分隔墙绕行均能返回 `Goal reached`；长距离到达后 AMCL 仍可能
 继续修正地图位姿，因此应结合 Gazebo 真值和 `/amcl_pose` 评估定位误差，不能只
 以 action 成功作为定位精度结论。
+
+## 第三方场景资源
+
+RoboCup Home 家具模型和网格来自 `wpr_simulation`，原项目声明为 GPLv3。
+许可证副本位于 `third_party_licenses/wpr_simulation_GPL-3.0.txt`。为解除运行时
+包依赖，模型中的 mesh URI 已从 `package://wpr_simulation/...` 改为
+`package://dashgo_gazebo/...`，模型几何、碰撞体和场景生成位姿保持不变。
