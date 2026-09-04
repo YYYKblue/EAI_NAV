@@ -184,7 +184,10 @@
       <rightJoint>base_r_wheel_joint</rightJoint>
       <wheelSeparation>0.445</wheelSeparation>
       <wheelDiameter>0.148</wheelDiameter>
-      <wheelAcceleration>0.30</wheelAcceleration>
+      <!-- Acceleration and deceleration are shaped upstream by
+           yocs_velocity_smoother. A zero value disables this plugin's second
+           acceleration limiter so Gazebo follows /smoother_cmd_vel directly. -->
+      <wheelAcceleration>0.0</wheelAcceleration>
       <wheelTorque>20</wheelTorque>
       <commandTopic>gazebo_cmd_vel</commandTopic>
       <odometryTopic>odom</odometryTopic>
