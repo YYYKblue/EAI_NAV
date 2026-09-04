@@ -52,7 +52,7 @@ AMCL、Costmap 和安全区节点。
 ## 启动
 
 ```bash
-cd /home/bboss/dashgo_ws
+cd ~/dashgo_ws
 catkin_make
 source devel/setup.bash
 ```
@@ -97,6 +97,11 @@ roslaunch dashgo_gazebo sim_base.launch \
 旧版本（尚未过滤自体回波）的 `/scan` 建过图，建议重新建图并保存，避免旧地图
 中残留跟随机器人产生的伪障碍痕迹；也可通过 `map_file:=...` 传入其他地图。
 
+注意：当前`maps/robocup_home.yaml`的`image`仍是开发机绝对路径
+`/home/bboss/dashgo_ws/.../robocup_home.pgm`。本机可加载，但复制到其他用户名或路径
+后会失败。在配置修复为相对路径前，请修改该字段或通过`map_file:=...`传入一份路径
+正确的地图 YAML；详见仓库根目录`docs/current_issues.md`。
+
 ## 接口与验证点
 
 控制链路为：
@@ -108,9 +113,15 @@ move_base /cmd_vel
   -> gazebo_ros_diff_drive
 ```
 
+Gazebo差速插件中的`wheelAcceleration`当前为`0.0`，含义是关闭插件自身的第二层
+加速度限制，使其直接跟随`/gazebo_cmd_vel`；上游`yocs_velocity_smoother`仍然运行，
+并继续按`dashgo_driver/config/velocity_smoother.yaml`限制速度和加减速度。
+
 `sim_safety_cmd_gate` 复现真机驱动当前逻辑：任一安全区计数 `/is_passed` 或
 `/is_passed_2` 大于 `2` 时，只禁止正向 `linear.x`，仍允许后退和转向；超过
-1 秒未收到速度命令时输出零速度。
+1 秒未收到速度命令时输出零速度。安全计数默认是“可通行”，且自身没有计数消息
+超时，因此安全节点未启动或停止更新时仍是fail-open；这只能用于算法联调，不构成
+功能安全保证。
 
 主要输出：`/scan`（过滤后）、`/scan_raw`（仅诊断）、`/scan_2`、`/scan_3`、`/imu`、`/odom`、
 `/odom_combined`、`/joint_states`。导航模式的主 TF 链应为：
@@ -131,9 +142,10 @@ rosrun tf tf_echo map base_footprint
 
 包内的 `navigation_test.world` 包含外墙、分隔墙和方形障碍物，可用于规划绕障，
 但不代表真实场地。
-当前实测短距离与分隔墙绕行均能返回 `Goal reached`；长距离到达后 AMCL 仍可能
+历史仿真记录中短距离与分隔墙绕行均能返回 `Goal reached`；长距离到达后 AMCL 仍可能
 继续修正地图位姿，因此应结合 Gazebo 真值和 `/amcl_pose` 评估定位误差，不能只
-以 action 成功作为定位精度结论。
+以 action 成功作为定位精度结论。2026-09-04 的本轮复核验证了无界面基础链与完整
+定位导航链能初始化，但没有重新发送目标点复测上述运动结果。
 
 ## 第三方场景资源
 

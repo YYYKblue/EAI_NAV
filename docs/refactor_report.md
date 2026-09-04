@@ -1,9 +1,9 @@
-# Dashgo ROS Noetic 最终状态报告
+# Dashgo ROS Noetic 当前状态报告
 
 ## 当前结论
 
-工作区已收敛为 5 个运行 package，旧功能包和`总体目标.md`已经删除。当前文档、
-构建和运行均以现有源码为准，不再依赖已删除目录。
+工作区当前包含 6 个运行 package：5 个真机/通用包和 1 个 Gazebo 仿真包。旧功能包
+和`总体目标.md`已经删除；当前文档、构建和运行均以现有源码为准。
 
 最终部署目标是 NVIDIA Jetson Nano、Ubuntu 20.04（ARM64/aarch64）、ROS 1
 Noetic和Python 3。开发环境中的构建与无硬件检查已经完成，Nano真机验收尚未完成。
@@ -14,9 +14,14 @@ Noetic和Python 3。开发环境中的构建与无硬件检查已经完成，Nan
 |---|---|
 | 基础硬件链 | `roslaunch dashgo_bringup base.launch` |
 | GMapping建图 | `roslaunch dashgo_bringup mapping.launch` |
+| 边建图边导航 | `roslaunch dashgo_bringup mapping_navigation.launch` |
 | AMCL/TEB导航 | `roslaunch dashgo_bringup navigation.launch` |
 | RViz | `roslaunch dashgo_bringup rviz.launch` |
 | 键盘控制 | `rosrun dashgo_bringup teleop_twist_keyboard.py` |
+| Gazebo基础链 | `roslaunch dashgo_gazebo sim_base.launch` |
+| Gazebo建图 | `roslaunch dashgo_gazebo sim_mapping.launch` |
+| Gazebo边建图边导航 | `roslaunch dashgo_gazebo sim_mapping_navigation.launch` |
+| Gazebo定位导航 | `roslaunch dashgo_gazebo sim_navigation.launch` |
 
 建图和导航入口已经递归包含基础硬件链，不应另行重复启动`base.launch`。建图和导航
 可通过`rviz:=true`同时启动 RViz；无桌面的 Nano 应保持默认`false`。
@@ -37,7 +42,8 @@ src/
 ├── ydlidar/                YDLidar 1.3.1驱动核心及三雷达launch
 ├── dashgo_description/     导航TF和RViz RobotModel所需Xacro
 ├── yocs_velocity_smoother/ /cmd_vel速度/加速度平滑nodelet
-└── dashgo_bringup/         基础启动、建图、导航、RViz、teleop、安全和配置
+├── dashgo_bringup/         基础启动、建图、导航、RViz、teleop、安全和配置
+└── dashgo_gazebo/          Gazebo模型、场景、地图、传感器和仿真入口
 ```
 
 `yocs_velocity_smoother`来自上游`yujinrobot/yujin_ocs`提交
@@ -48,9 +54,13 @@ src/
 
 - `base.launch`：STM32、三雷达、URDF、IMU静态TF、robot_pose_ekf和速度平滑；
 - `mapping.launch`：在基础链之上启动GMapping；
+- `mapping_navigation.launch`：由GMapping提供地图和定位，同时启动move_base；
+- `move_base.launch`：加载global/local Costmap、GlobalPlanner、TEB及可选安全门；
 - `navigation.launch`：在基础链之上启动地图、AMCL、move_base、GlobalPlanner、
   TEB和两路激光安全门；
-- `rviz.launch`：只启动RViz及当前配置。
+- `rviz.launch`：只启动RViz及当前配置；
+- `dashgo_gazebo/sim_*.launch`：用Gazebo底盘、三激光和IMU替代硬件接口，再组合
+  上述通用建图/导航入口。
 
 `base.launch`提供`use_driver`、`use_lidars`和`use_description`开关，便于在 Nano 上
 逐层诊断。默认值均为`true`。
@@ -99,8 +109,10 @@ teleop 或 move_base
 /scan + /map + TF           -> AMCL + move_base
 ```
 
-底盘驱动在`is_passed* > 2`时禁止正向速度；STM32急停状态优先输出零速度。正常导航
-默认启用两路安全门，不应为日常运行关闭`safety_filters`。
+底盘驱动在`is_passed* > 2`时禁止正向速度。当前代码的急停分支仅清零发布到
+`robot_cmd_vel`的诊断消息，没有清零后续轮速计算所用的`x/th`；STM32固件是否另有
+硬件互锁尚未验证，不能把急停描述为已经由ROS软件链保证。正常导航默认启用两路
+安全门，但计数节点/TF/scan失效也没有超时闭锁，不能把它当成fail-safe安全系统。
 
 ## TF 发布关系
 
@@ -121,6 +133,7 @@ teleop 或 move_base
 - 默认`bj050101.yaml/.pgm`地图；
 - RViz配置、RobotModel和Xacro；
 - 键盘控制、速度平滑和两路前向激光安全门。
+- Gazebo Classic仿真底盘、三激光、IMU、自体回波过滤、RoboCup Home场景与地图。
 
 当前工作区明确不包含 rosbridge、网页/APP通信、多目标/取消目标、厂商业务动作、
 相机点云、已禁用sonar数据源、历史地图和ROS导航栈源码副本。
@@ -133,7 +146,8 @@ teleop 或 move_base
 - 串口接收状态机统一处理`bytes`；
 - PySerial参数使用`write_timeout`；
 - 修正`reset_IMU`调用名和shutdown发布；
-- STM32数据包布局、校验、里程计和运动学公式保持不变。
+- STM32数据包布局、里程计和运动学公式保持不变；接收校验和目前被无条件分支绕过，
+  这是待修复问题，不应描述为已验证的协议校验。
 
 ### teleop 与模型
 
@@ -149,13 +163,16 @@ teleop 或 move_base
 
 ## 系统依赖状态
 
-截至2026-08-10，当前开发环境已满足所有 package 声明的系统依赖：
+截至2026-09-04，当前开发环境已满足所有 package 声明的系统依赖：
 
 - `rosdep check --from-paths src --ignore-src`返回
   `All system dependencies have been satisfied`；
 - `gmapping`、`move_base`、`map_server`、`amcl`、`costmap_2d`、
   `global_planner`、`teb_local_planner`和`robot_pose_ekf`均可由`rospack`定位；
-- 五个本地 package 可在 Ubuntu 20.04 / ROS Noetic 下完成catkin构建。
+- 六个本地 package 可在 Ubuntu 20.04 / ROS Noetic 下完成catkin构建。
+
+`rosdep check`不会发现未声明依赖：`ydlidar`的 launch 使用`tf`，但自身
+`package.xml`未声明该运行依赖。完整问题清单见`docs/current_issues.md`。
 
 Nano是独立目标机，复制工作空间后仍需在板端重新执行`rosdep install`、
 `rosdep check`和`catkin_make`。Noetic已进入EOL，更新rosdep索引时使用：
@@ -168,17 +185,20 @@ rosdep update --include-eol-distros
 
 ### 已完成
 
-- 删除旧`build/devel`后的干净`catkin_make`；
+- 当前源码执行`catkin_make -DCMAKE_BUILD_TYPE=Release -j2`成功；
 - YDLidar驱动和yocs nodelet的C++编译/链接；
 - Python 3脚本和动态配置的语法编译；
 - STM32接收状态机的Python 3字节包静态烟雾测试；
-- 13份YAML及全部XML、launch和Xacro解析；
+- 15份YAML和全部package/launch XML解析；两个主Xacro均成功展开为URDF XML；
 - Xacro展开并生成`base_footprint`、`base_link`和左右轮link；
-- 五个最终命令对应的 launch/可执行文件解析，其中四个launch完成
-  `roslaunch --files`和`roslaunch --nodes`检查；
+- 17个bringup/Gazebo/description/YDLidar launch完成`roslaunch --files`递归解析；
 - `rosdep check`及八个主要标准ROS运行包的`rospack find`复验；
 - `use_driver:=false use_lidars:=false`条件下短时启动`base.launch`，基础节点持续
-  运行到测试主动结束。
+  运行到测试主动结束；
+- `sim_base.launch gui:=false rviz:=false spawn_scene_objects:=false`短时启动成功，
+  机器人、三激光、IMU、里程计、EKF、自体过滤器和速度链均完成初始化；
+- `sim_navigation.launch`以同样的无界面条件短时启动成功，map_server读取
+  `640 x 608 @ 0.05 m/cell`地图，AMCL、global/local Costmap、TEB和安全门完成初始化。
 
 无硬件基础启动时，URDF报告`iRobot/LightGrey`材质未定义。该警告只影响模型显示
 颜色，不影响link/joint、TF或导航数据链。
@@ -191,6 +211,7 @@ rosdep update --include-eol-distros
 - 两路激光安全门的真实障碍和停车距离验证；
 - 实际场地GMapping建图；
 - AMCL定位、GlobalPlanner/TEB导航和重复运行稳定性。
+- 仿真中的目标点到达、定位误差和安全门动态行为，本轮只验证了启动与数据链初始化。
 
 构建、静态解析和无硬件启动只证明源码集成层成立，不等同于 Nano、传感器或机器人
 运动行为验收。

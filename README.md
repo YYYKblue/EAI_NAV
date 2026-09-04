@@ -1,8 +1,8 @@
 # Dashgo ROS Noetic 工作空间
 
-本工作空间是 Dashgo 移动底盘的最终精简运行版本，提供 STM32 底盘驱动、
-三台 YDLidar、里程计与 IMU 融合、GMapping 建图、AMCL/TEB 导航、RViz、
-键盘控制和两路激光安全门。
+本工作空间是 Dashgo 移动底盘的精简运行版本，提供 STM32 底盘驱动、三台
+YDLidar、里程计与 IMU 融合、GMapping 建图、AMCL/TEB 导航、RViz、键盘控制、
+两路激光安全门，以及复用同一导航配置的 Gazebo Classic 仿真环境。
 
 ## 最终运行环境
 
@@ -15,6 +15,7 @@
 | Python | Python 3 |
 | 底盘控制器 | STM32，115200 bit/s |
 | 激光雷达 | 3 台 YDLidar，均为 230400 bit/s |
+| 仿真环境 | Gazebo Classic（Ubuntu 20.04 / ROS Noetic） |
 
 当前源码也在 Ubuntu 20.04 / ROS Noetic 的 WSL 环境完成了构建和无硬件启动检查，
 但最终部署与真机验收平台是 Jetson Nano。WSL 检查不能代替 Nano 上的串口、雷达、
@@ -28,7 +29,8 @@ src/
 ├── ydlidar/                三台 YDLidar 的驱动核心与启动文件
 ├── dashgo_description/     URDF/Xacro 与机器人 TF
 ├── yocs_velocity_smoother/ /cmd_vel 速度和加速度平滑
-└── dashgo_bringup/         基础、建图、导航、RViz、安全和 teleop
+├── dashgo_bringup/         基础、建图、导航、RViz、安全和 teleop
+└── dashgo_gazebo/          Gazebo 机器人、场景、地图及仿真入口
 ```
 
 ## 硬件与串口连接
@@ -164,7 +166,7 @@ sudo fuser -v /dev/port1 /dev/port2 /dev/port3 /dev/port4
 
 ## 运行方法
 
-以下命令均在 Nano 上执行，并先 source ROS 与工作空间。
+以下真机命令均在 Nano 上执行，并先 source ROS 与工作空间。
 
 ### 分层硬件检查
 
@@ -220,6 +222,15 @@ mkdir -p ~/dashgo_maps
 rosrun map_server map_saver -f ~/dashgo_maps/site_01
 ```
 
+### 边建图边导航
+
+`mapping_navigation.launch`由 GMapping 同时提供`/map`与`map -> odom_combined`，
+不会启动 map_server 或 AMCL；move_base 只能在已经观测到的区域内规划：
+
+```bash
+roslaunch dashgo_bringup mapping_navigation.launch
+```
+
 ### AMCL/TEB 导航
 
 默认使用仓库中的`bj050101.yaml`：
@@ -248,6 +259,24 @@ roslaunch dashgo_bringup rviz.launch
 建图或导航也可通过`rviz:=true`启动 RViz。若 RViz 在另一台电脑运行，两端必须
 处于同一网络，并正确设置`ROS_MASTER_URI`和各自可被对方访问的`ROS_IP`。
 
+### Gazebo 仿真
+
+仿真入口会替代 STM32 与三台串口雷达，但继续使用`dashgo_bringup`中的 EKF、
+GMapping、AMCL、move_base、TEB、Costmap 和速度平滑配置：
+
+```bash
+# 基础传感器与底盘
+roslaunch dashgo_gazebo sim_base.launch
+
+# 建图 / 边建图边导航 / 已知地图定位导航
+roslaunch dashgo_gazebo sim_mapping.launch
+roslaunch dashgo_gazebo sim_mapping_navigation.launch
+roslaunch dashgo_gazebo sim_navigation.launch
+```
+
+无图形界面时追加`gui:=false rviz:=false`。仿真模型的理想化边界、场景资源、
+控制链和地图说明见`src/dashgo_gazebo/README.md`。
+
 ## 运行状态检查
 
 ```bash
@@ -275,10 +304,30 @@ rosrun tf tf_echo odom_combined base_footprint
 串口占用；如果某一路雷达无数据，检查对应`/dev/port2`～`/dev/port4`映射、230400
 波特率和 USB 供电，不要通过交换 topic 名掩盖物理接线错误。
 
+## 当前已知问题
+
+截至 2026-09-04，构建和仿真启动检查均通过，但仍存在不能用“能启动”掩盖的风险：
+
+- 底盘驱动的 ROS 急停分支只清零诊断消息，没有清零后续下发轮速所用的`x/th`；
+  STM32 固件是否另有硬件互锁，仓库代码无法证明；
+- STM32 接收状态机当前无条件接受校验字节，接收校验和没有生效；
+- 两路激光安全计数默认是“可通行”，且没有消息新鲜度超时，scan/TF/节点失效时
+  会保持最后状态；
+- Gazebo 默认地图 YAML 使用了当前电脑的绝对图片路径，迁移工作空间后需要修正；
+- YDLidar 的 launch 使用`tf/static_transform_publisher`，但其`package.xml`没有
+  声明`tf`运行依赖；四个自研 package 的许可证字段仍是占位值。
+
+证据、影响、复现方式和修复建议见`docs/current_issues.md`。在急停与安全门完成抬轮
+真机验证前，不应把它们描述为已验收的安全功能。
+
 ## 文档与验证边界
 
 - `docs/dependency_report.md`：当前 package、系统包和硬件依赖；
-- `docs/refactor_report.md`：最终功能结构、兼容性修改和已验证/未验证状态。
+- `docs/refactor_report.md`：当前功能结构、兼容性修改和已验证/未验证状态；
+- `docs/current_issues.md`：按严重度整理的代码、配置和元数据问题；
+- `src/dashgo_bringup/docs/configuration/README.md`：11 份导航/建图 YAML 的逐参数说明；
+- `src/dashgo_gazebo/README.md`：仿真模型、入口、接口与验证边界。
 
-当前已完成源码构建、依赖解析、launch 解析和无硬件基础启动检查。Nano 真机上的
-STM32通信、三雷达数据、激光安全门、GMapping和AMCL/TEB仍需逐项验收。
+当前已完成 6 个 package 的源码构建、依赖解析、launch 解析，以及 Gazebo 基础链
+和定位导航链的无界面短时启动。Nano 真机上的 STM32 通信、三雷达数据、急停、
+激光安全门、GMapping 和 AMCL/TEB 仍需逐项验收。
