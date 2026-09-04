@@ -119,13 +119,13 @@ TEB 的 `min_obstacle_dist` 则直接使用多边形边界。当前理想侧向�
 
 ## 6. 与 URDF 的关系
 
-`dashgo_description/urdf/dashgobase/base.urdf.xacro` 中的底盘碰撞盒是 `0.40 m × 0.40 m`，其中心相对 `base_footprint` 还存在 X 方向偏置。这个 URDF 几何用于机器人模型显示或三维碰撞语义，并不会覆盖本包中 Costmap 和 TEB 的二维 polygon。
+`dashgo_description/urdf/dashgobase/base.urdf.xacro` 中的底盘碰撞包络已按实测最外边界改为 `0.566 m × 0.566 m`。由于 `base_link` 相对 `base_footprint` 向前偏置 `0.115 m`，其 visual、collision 和理想化质心均在 `base_link` 下使用 `x=-0.115 m` 的 origin，使三维包络中心准确落在 `base_footprint`。
 
 因此按当前约定：
 
-- 导航二维外形以 `0.566 m × 0.566 m` polygon 为准；
-- 不应因为 RViz 中 URDF 看起来更小，就缩小导航 footprint；
-- 若以后要求 URDF 与导航外形一致，需要单独修改 `dashgo_description`，不能只改本包 YAML。
+- 导航二维外形和 Gazebo X/Y 碰撞包络均为 `0.566 m × 0.566 m`；
+- 两者都以 `base_footprint` 为几何中心；`base_link` 仍保留原机械参考点偏置；
+- 修改实测外边界时，必须同步检查 URDF、Costmap、TEB 和仿真自体回波过滤盒。
 
 ## 7. 坐标系链路
 

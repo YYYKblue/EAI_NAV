@@ -14,7 +14,7 @@ catkin_install_python(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(DIRECTORY launch maps meshes models third_party_licenses urdf worlds
+install(DIRECTORY config launch maps meshes models third_party_licenses urdf worlds
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

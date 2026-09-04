@@ -17,6 +17,7 @@
   <exec_depend>dashgo_description</exec_depend>
   <exec_depend>gazebo_plugins</exec_depend>
   <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>laser_filters</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>xacro</exec_depend>
 </package>

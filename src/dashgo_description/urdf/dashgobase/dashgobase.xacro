@@ -56,10 +56,10 @@
   </link>
 
   <joint name="front_point_flag" type="fixed">
-    <origin xyz="0.2 0 ${base_length/2}" rpy="0 0 0" />
+    <!-- Keep the marker on the measured +0.283 m footprint boundary. -->
+    <origin xyz="${base_x/2 - base_link_offset_x} 0 ${base_length/2}" rpy="0 0 0" />
     <parent link="base_link"/>
     <child link="front_flag" />
   </joint>
 
 </robot>
-

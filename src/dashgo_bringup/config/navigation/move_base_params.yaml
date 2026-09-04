@@ -13,8 +13,8 @@ controller_patience: 3.0             # 局部规划持续失败多久后触发�
 shutdown_costmaps: false             # 机器人非导航状态下仍保持代价地图运行。
 
 # 振荡检测
-oscillation_timeout: 5.0             # 在限定范围内停留超过该时间则判定振荡，单位 s。
-oscillation_distance: 0.2            # 移动超过该距离后重置振荡计时，单位 m。
+oscillation_timeout: 15.0            # 给低速原地转向留足时间；持续 15 s 无平移进展才判定振荡。
+oscillation_distance: 0.1            # 平移 0.1 m 即视为取得进展并重置振荡计时，单位 m。
 
 # 恢复行为
 recovery_behavior_enabled: true      # 规划或控制失败时允许执行恢复行为。

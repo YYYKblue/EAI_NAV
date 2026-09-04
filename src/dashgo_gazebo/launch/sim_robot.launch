@@ -26,6 +26,17 @@
     <param name="publish_frequency" value="30.0" />
   </node>
 
+  <!-- Gazebo ray sensors can report collisions from their own robot model.
+       Preserve /scan_raw for diagnosis and expose only the chassis-filtered
+       scan as /scan to the existing mapping/navigation/safety chain. -->
+  <node name="sim_main_scan_self_filter" pkg="laser_filters"
+        type="scan_to_scan_filter_chain" output="screen">
+    <rosparam command="load"
+              file="$(find dashgo_gazebo)/config/main_scan_self_filter.yaml" />
+    <remap from="scan" to="/scan_raw" />
+    <remap from="scan_filtered" to="/scan" />
+  </node>
+
   <node name="spawn_dashgo" pkg="gazebo_ros" type="spawn_model"
         args="-urdf -param robot_description -model dashgo -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)"
         output="screen" />

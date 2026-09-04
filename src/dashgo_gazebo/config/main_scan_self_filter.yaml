@@ -1,0 +1,15 @@
+scan_filter_chain:
+  - name: remove_robot_body_returns
+    type: laser_filters/LaserScanBoxFilter
+    params:
+      # Coordinates are evaluated in base_footprint. The measured chassis and
+      # wheel envelope is x/y=[-0.283, 0.283]. Small margins cover ray/collision
+      # discretization without removing any physically reachable obstacle.
+      box_frame: base_footprint
+      min_x: -0.30
+      max_x: 0.30
+      min_y: -0.30
+      max_y: 0.30
+      min_z: 0.00
+      max_z: 0.40
+      invert: false

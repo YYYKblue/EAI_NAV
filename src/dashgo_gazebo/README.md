@@ -14,12 +14,17 @@ RoboCup Home 场景的家具模型、DAE 网格和贴图已经放入本包，不
 |---|---|---|
 | 驱动轮直径 | `0.148 m` | 与 `dashgo_driver/config/base.yaml` 一致 |
 | 驱动轮轮距 | `0.445 m` | 与 `dashgo_driver/config/base.yaml` 一致 |
-| 车体碰撞盒 | `0.40 x 0.40 x 0.20 m` | 保留原 URDF 值 |
-| 导航 footprint | 原 `dashgo_bringup` 多边形 | 仿真不另建一套 footprint |
+| 车体碰撞包络 | `0.566 x 0.566 x 0.20 m` | X/Y 与实测最外边界及导航 footprint 一致 |
+| 导航 footprint | `[-0.283, 0.283] m` 方形 | 与仿真碰撞包络共用 `base_footprint` 中心 |
 | 支承轮 | 四角四个低摩擦球形接触体 | 近似真实被动全向轮，不模拟滚子细节 |
 | 质量与惯量 | 车体 `20 kg`，驱动轮 `0.5 kg/个` | 理想值，只用于获得稳定动力学；不能据此验证电机电流、打滑或倾覆 |
 | 传感器 | 三路 2D 激光 + IMU | 话题及 frame 名沿用真机配置 |
 | 默认场景 | RoboCup Home 墙体和家具 | 家具可通过启动参数关闭 |
+
+`base_footprint` 位于两只驱动轮的地面接触平面；`base_link` 是机械本体参考点，
+相对前者为 `(0.115, 0, 0.112) m`。车体 visual、collision 和理想化质心在
+`base_link` 下向后偏移 `0.115 m`，因此其 X/Y 几何中心仍与
+`base_footprint` 以及导航 footprint 重合。
 
 轮径和轮距同时出现在三个位置，是因为消费者不同：
 
@@ -31,9 +36,18 @@ RoboCup Home 场景的家具模型、DAE 网格和贴图已经放入本包，不
 因此修改真机标定值时，必须同步检查以上三个位置。目前统一为直径 `0.148 m`、
 轮距 `0.445 m`。
 
-低位激光在仿真中放在车体前缘外侧。原因是 Gazebo Classic 的 ray 传感器不会
-自动滤除本机器人碰撞体；完全照搬真机安装点会扫到车体或全向支承轮，并在代价
-地图中生成假障碍。其 frame 名、朝向、扫描范围和高度分层用途仍与真机一致。
+主激光 `laser_frame` 的仿真 TF 与真机一致：在 `base_footprint` 下为
+`(0.174, -0.176, 0.28)`、yaw `-0.785 rad`。它位于实测车体包络内的右前区域，
+此前看起来几乎在实体外，是旧 `0.40 m` URDF 外观小于实测包络造成的，不是 TF
+填错。主激光原始数据发布为 `/scan_raw`；仿真专用
+`LaserScanBoxFilter` 会删除机身包络内的自体回波，再以 `/scan` 提供给建图、
+AMCL、Costmap 和安全区节点。
+
+低位激光 `laser_frame_2` 则确实在仿真中放在车体前缘外侧。这是必要的理想化：
+真机坐标 `(0.17, 0, 0.05)` 落在当前完整方盒碰撞体内部，而简化模型没有表达
+真实底盘的安装孔和缺口；完全照搬会让 Gazebo ray 从碰撞体内部发射。其 frame
+名、朝向、扫描范围和高度分层用途仍与真机一致。若以后把底盘 collision 拆成
+能表达真实缺口的组合几何，再把该雷达恢复到真机坐标。
 
 ## 启动
 
@@ -79,10 +93,9 @@ roslaunch dashgo_gazebo sim_base.launch \
   spawn_scene_objects:=false
 ```
 
-需要注意：`sim_navigation.launch` 当前的默认静态地图仍是
-`maps/navigation_test.yaml`，它不对应 RoboCup Home 场景。在生成并保存
-RoboCup Home 的占据栅格地图之前，应使用 `sim_mapping.launch` 或
-`sim_mapping_navigation.launch`；之后通过 `map_file:=...` 传入新地图。
+`sim_navigation.launch` 当前默认静态地图是 `maps/robocup_home.yaml`。如果你用
+旧版本（尚未过滤自体回波）的 `/scan` 建过图，建议重新建图并保存，避免旧地图
+中残留跟随机器人产生的伪障碍痕迹；也可通过 `map_file:=...` 传入其他地图。
 
 ## 接口与验证点
 
@@ -99,7 +112,7 @@ move_base /cmd_vel
 `/is_passed_2` 大于 `2` 时，只禁止正向 `linear.x`，仍允许后退和转向；超过
 1 秒未收到速度命令时输出零速度。
 
-主要输出：`/scan`、`/scan_2`、`/scan_3`、`/imu`、`/odom`、
+主要输出：`/scan`（过滤后）、`/scan_raw`（仅诊断）、`/scan_2`、`/scan_3`、`/imu`、`/odom`、
 `/odom_combined`、`/joint_states`。导航模式的主 TF 链应为：
 
 ```text
@@ -110,6 +123,7 @@ map -> odom_combined -> base_footprint -> base_link -> sensors/wheels
 
 ```bash
 rostopic hz /scan /scan_2 /scan_3 /odom /imu
+rostopic hz /scan_raw /scan
 rostopic echo /is_passed
 rostopic echo /is_passed_2
 rosrun tf tf_echo map base_footprint

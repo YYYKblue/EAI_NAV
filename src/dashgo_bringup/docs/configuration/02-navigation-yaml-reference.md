@@ -241,8 +241,8 @@ global_frame_id = map
 
 | 参数 | 当前值 | 类型/单位 | 详细含义与当前效果 |
 |---|---:|---|---|
-| `oscillation_timeout` | `5.0` | s | 机器人在振荡重置半径内停留超过 5 s，就判定缺乏有效进展并触发恢复。0 可关闭超时振荡检测。 |
-| `oscillation_distance` | `0.2` | m | 相对上次振荡重置位置移动超过 0.2 m，才算取得足够进展并重置计时。小幅前后抖动不一定能重置。 |
+| `oscillation_timeout` | `15.0` | s | 机器人在振荡重置半径内停留超过 15 s，才判定缺乏有效进展并触发恢复。当前最大角速度只有 0.3 rad/s，完整原地掉头理论上已需约 10.5 s，因此原 5 s 会把正常转向误判为振荡。0 可关闭超时振荡检测。 |
+| `oscillation_distance` | `0.1` | m | 相对上次振荡重置位置移动超过 0.1 m，即视为取得平移进展并重置计时。仍足以排除很小的前后抖动。 |
 | `recovery_behavior_enabled` | `true` | bool | 允许执行下方显式列出的恢复插件。false 时规划/控制失败会直接导致目标失败，不运行清图或旋转。 |
 
 `recovery_behaviors` 是有顺序的插件列表：
@@ -281,6 +281,7 @@ global_frame_id = map
 | `dt_hysteresis` | `0.1` | s | 自动增删位姿的滞回带，避免时间差在阈值附近导致位姿数量反复变化。通常约为 `dt_ref` 的 10% 左右；当前为约 22%。 |
 | `global_plan_overwrite_orientation` | `true` | bool | TEB 根据局部全局路径几何重新计算中间路径点朝向，避免 GlobalPlanner 中间点朝向信息不可靠。最终目标朝向仍受 goal tolerance 约束。 |
 | `max_global_plan_lookahead_dist` | `3.0` | m | 按路径累计长度，从全局路径中最多截取 3 m 交给 TEB；还会受局部 Costmap 尺寸限制。值更大看得更远但障碍和轨迹变量增多。 |
+| `global_plan_viapoint_sep` | `0.3` | m | 每隔约 0.3 m 从全局路径提取一个参考点交给 TEB。正值启用全局路径跟随约束，配合 `weight_viapoint` 使用；障碍冲突时 TEB 仍可偏离绕行。 |
 | `feasibility_check_no_poses` | `5` | int，位姿数 | 每个采样周期从轨迹起点向前检查最多 5 个预测位姿的 footprint 可行性。值小计算快，但更远的不可行段可能较晚被发现。0 的特殊行为应按插件版本核对，不应当作“检查全部”随意使用。 |
 
 ### 7.3 差速底盘运动约束和外形
@@ -342,6 +343,7 @@ global_frame_id = map
 | `weight_kinematics_forward_drive` | `100` | 惩罚负向线速度，强烈偏好前进。因此即使 `max_vel_x_backwards=0.15`，TEB 也只会在前进代价很差时考虑倒车。 |
 | `weight_kinematics_turning_radius` | `1` | 最小转弯半径约束权重。当前 `min_turning_radius=0`，该约束通常不会成为限制因素。 |
 | `weight_optimaltime` | `1` | 压缩轨迹时间、偏向更快到达的权重。提高后可能更积极，但会与避障、速度和加速度约束竞争。 |
+| `weight_viapoint` | `5.0` | 跟随全局路径参考点的权重。当前值用于减少 TEB 对全局路径的无必要横向切弯；过高会降低局部避障自由度。 |
 | `weight_obstacle` | `50` | 满足 `min_obstacle_dist` 的主要障碍惩罚权重。插件默认还会在外层迭代中用未显式配置的 `weight_adapt_factor` 逐轮放大此权重，所以 50 不是每一轮固定不变的唯一有效数值。 |
 | `weight_inflation` | `0.1` | `inflation_dist` 软缓冲惩罚权重，设计上应明显小于主障碍权重；当前比 50 小很多。 |
 

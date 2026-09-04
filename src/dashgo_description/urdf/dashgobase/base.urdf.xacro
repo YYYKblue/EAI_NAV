@@ -3,9 +3,12 @@
 <robot name="base" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Define a number of dimensions using properties -->
-  <xacro:property name="base_x" value="0.40" />
-  <xacro:property name="base_y" value="0.40" />
+  <!-- Measured outer chassis/wheel envelope, shared with the navigation
+       footprint: [-0.283, 0.283] in base_footprint. -->
+  <xacro:property name="base_x" value="0.566" />
+  <xacro:property name="base_y" value="0.566" />
   <xacro:property name="base_length" value="0.20" />
+  <xacro:property name="base_link_offset_x" value="0.115" />
   <xacro:property name="wheel_length" value="0.046" />
   <!-- Keep the displayed/physical wheel geometry aligned with the calibrated
        values used by dashgo_driver/config/base.yaml. -->
@@ -83,25 +86,26 @@
 </visual>
 -->
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <!-- base_link is 0.115 m ahead of the measured footprint center. -->
+            <origin xyz="${-base_link_offset_x} 0 0" rpy="0 0 0"/>
             <geometry>
                 <box size="${base_x} ${base_y} ${base_length}"/>
             </geometry>
             <material name="Grey"/>
         </visual>
         <collision>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="${-base_link_offset_x} 0 0" rpy="0 0 0"/>
             <geometry>
                  <box size="${base_x} ${base_y} ${base_length}"/>
             </geometry>
         </collision>
-        <!-- Idealized chassis mass/inertia. Replace these values when measured
-             data is available; dimensions intentionally retain the old box. -->
+        <!-- Idealized uniform-box chassis mass/inertia. Its center is aligned
+             with the measured footprint center; replace when measured. -->
         <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <origin xyz="${-base_link_offset_x} 0 0" rpy="0 0 0"/>
             <mass value="20.0"/>
-            <inertia ixx="0.333333" ixy="0" ixz="0"
-                     iyy="0.333333" iyz="0" izz="0.533333"/>
+            <inertia ixx="0.600593" ixy="0" ixz="0"
+                     iyy="0.600593" iyz="0" izz="1.067853"/>
         </inertial>
     </link>
   </xacro:macro>
@@ -120,7 +124,8 @@
 <!--
     <origin xyz="0 0 0.04" rpy="0 0 0" />     
 -->  
-    <origin xyz="0.115 0 ${base_length/2 - wheel_offset_z}" rpy="0 0 0" />      
+    <!-- Put base_footprint on the drive-wheel contact plane. -->
+    <origin xyz="${base_link_offset_x} 0 ${wheel_radius - wheel_offset_z}" rpy="0 0 0" />
     <parent link="base_footprint"/>
     <child link="base_link" />
   </joint>

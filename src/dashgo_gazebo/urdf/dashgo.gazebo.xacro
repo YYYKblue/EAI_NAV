@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="dashgo_sim" xmlns:xacro="http://ros.org/wiki/xacro">
-  <!-- The shared description contains the 0.40 x 0.40 m chassis, two drive
+  <!-- The shared description contains the measured 0.566 x 0.566 m envelope, two drive
        wheels, base frames and RViz visuals. -->
   <xacro:include filename="$(find dashgo_description)/urdf/dashgobase/dashgobase.xacro" />
 
@@ -44,10 +44,20 @@
     </gazebo>
   </xacro:macro>
 
-  <xacro:omni_support name="front_left_omni" x="0.17" y="0.17" />
-  <xacro:omni_support name="front_right_omni" x="0.17" y="-0.17" />
-  <xacro:omni_support name="rear_left_omni" x="-0.17" y="0.17" />
-  <xacro:omni_support name="rear_right_omni" x="-0.17" y="-0.17" />
+  <!-- Sphere centers are one radius inside the measured +/-0.283 m envelope.
+       X values are converted from base_footprint to the offset base_link. -->
+  <xacro:omni_support name="front_left_omni"
+                      x="${base_x/2 - support_radius - base_link_offset_x}"
+                      y="${base_y/2 - support_radius}" />
+  <xacro:omni_support name="front_right_omni"
+                      x="${base_x/2 - support_radius - base_link_offset_x}"
+                      y="${-base_y/2 + support_radius}" />
+  <xacro:omni_support name="rear_left_omni"
+                      x="${-base_x/2 + support_radius - base_link_offset_x}"
+                      y="${base_y/2 - support_radius}" />
+  <xacro:omni_support name="rear_right_omni"
+                      x="${-base_x/2 + support_radius - base_link_offset_x}"
+                      y="${-base_y/2 + support_radius}" />
 
   <gazebo reference="base_link">
     <material>Gazebo/Grey</material>
@@ -134,14 +144,17 @@
        box. Its simulated height remains inside the configured 0.01 to 0.10 m
        obstacle band, but is high enough that a small chassis pitch cannot make
        the horizontal rays intersect the ground plane. -->
-  <xacro:sim_laser name="laser_frame" topic="scan"
-                   xyz="0.059 -0.176 0.142" rpy="0 0 -0.785"
+  <!-- Keep Gazebo's unfiltered main scan separate. sim_robot.launch removes
+       returns inside the retained chassis envelope and republishes /scan for
+       mapping, navigation and the safety gate. -->
+  <xacro:sim_laser name="laser_frame" topic="scan_raw"
+                   xyz="0.059 -0.176 0.168" rpy="0 0 -0.785"
                    min_angle="-2.356194" max_angle="2.356194" samples="1080" />
   <xacro:sim_laser name="laser_frame_2" topic="scan_2"
-                   xyz="0.250 0 -0.070" rpy="0 3.141592654 -3.04"
+                   xyz="0.250 0 -0.044" rpy="0 3.141592654 -3.04"
                    min_angle="-1.570796" max_angle="1.570796" samples="720" />
   <xacro:sim_laser name="laser_frame_3" topic="scan_3"
-                   xyz="-0.289 0.176 0.212" rpy="0 0 2.355"
+                   xyz="-0.289 0.176 0.238" rpy="0 0 2.355"
                    min_angle="-2.356194" max_angle="2.094395" samples="1020" />
 
   <gazebo reference="base_link">

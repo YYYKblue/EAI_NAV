@@ -9,6 +9,7 @@ TebLocalPlannerROS:
   dt_hysteresis: 0.1                 # 调整轨迹采样数量时的时间滞回量，单位 s。
   global_plan_overwrite_orientation: true # 用局部路径方向覆盖全局路径点的朝向。
   max_global_plan_lookahead_dist: 3.0 # 从全局路径截取给 TEB 的最大前视距离，单位 m。
+  global_plan_viapoint_sep: 0.3       # 每隔 0.3 m 从全局路径提取必经参考点，约束局部轨迹贴近全局路径。
   feasibility_check_no_poses: 5      # 每周期向前检查碰撞可行性的轨迹位姿数量。
 
   # 差速机器人速度与加速度约束
@@ -49,6 +50,7 @@ TebLocalPlannerROS:
   weight_kinematics_forward_drive: 100 # 偏好向前行驶、抑制倒车的权重。
   weight_kinematics_turning_radius: 1 # 最小转弯半径约束权重。
   weight_optimaltime: 1              # 缩短轨迹总时间的优化权重。
+  weight_viapoint: 5.0               # 跟随全局路径参考点的权重；过高会削弱局部绕障能力。
   weight_obstacle: 50                # 远离代价地图障碍物的优化权重。
   weight_inflation: 0.1              # TEB 软膨胀区的惩罚权重，应明显小于 weight_obstacle。
 
