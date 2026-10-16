@@ -1,30 +1,47 @@
-map_update_interval: 1.0
-maxUrange: 8.0
-maxRange: 10.0
-sigma: 0.05
-kernelSize: 3
-lstep: 0.05
-astep: 0.05
-iterations: 5
-lsigma: 0.075
-ogain: 3.0
-lskip: 0
-minimumScore: 30
-srr: 0.01
-srt: 0.02
-str: 0.01
-stt: 0.02
-linearUpdate: 0.05
-angularUpdate: 0.0436
-temporalUpdate: -1.0
-resampleThreshold: 0.5
-particles: 50
-xmin: -1.0
-ymin: -1.0
-xmax: 1.0
-ymax: 1.0
-delta: 0.05
-llsamplerange: 0.01
-llsamplestep: 0.01
-lasamplerange: 0.005
-lasamplestep: 0.005
+# 由 mapping.launch 加载到 /slam_gmapping 私有命名空间。
+# 激光话题和 base_frame、odom_frame、map_frame 由 launch 另外设置。
+
+# 地图输出与激光量程
+map_update_interval: 1.0  # 地图重新生成并发布的最小间隔，单位 s；仅在完整扫描更新成功后检查，不保证严格 1 Hz。
+maxUrange: 8.0            # 有效匹配/建图距离，单位 m；更远且未超过 maxRange 的有效射线在输出地图中截到此处清除自由空间，不标记远端障碍。
+maxRange: 10.0            # 最大考虑距离，单位 m；超过此值的读数被排除，应不小于 maxUrange 且不超过雷达可靠量程。
+
+# 扫描匹配：在运动预测位姿附近搜索，使激光端点与已有地图吻合。
+sigma: 0.05              # 端点匹配评分的距离平方尺度：贡献为 exp(-距离平方/sigma)；增大更宽松，不等同于测距标准差。
+kernelSize: 3            # 端点对应搜索的栅格索引半径；3 对应约 7×7 邻域，当前分辨率下单轴约 ±0.15 m，并非位姿搜索半径。
+lstep: 0.05              # 位姿优化的初始平移搜索步长，单位 m；与触发扫描更新的 linearUpdate 不同。
+astep: 0.05              # 位姿优化的初始旋转搜索步长，单位 rad，约 2.86°。
+iterations: 5            # 搜索步长递减的精修次数控制；无改进时将步长减半，不代表总共只搜索 5 次。
+lsigma: 0.075            # 粒子观测对数似然的距离平方尺度；减小会加重端点误差惩罚，与用于位姿优化评分的 sigma 分工不同。
+ogain: 3.0               # 权重归一化的平滑系数；增大通常压平粒子权重差异，减轻权重过度集中。
+lskip: 0                 # 匹配评分/似然计算时跳过的激光束数；0 不主动跳束，1 约每两束取一束，不改变 /scan 频率。
+minimumScore: 30         # 接受优化位姿的评分门槛；得分必须大于此值，否则保留运动预测位姿，并非丢弃整帧；非百分比。
+
+# 运动噪声：按里程计运动增量生成粒子预测噪声，描述融合运动估计的残余误差。
+# 以下交叉项按 GMapping motionmodel.cpp 的实际计算解释，不能直接照搬 AMCL 噪声参数。
+srr: 0.01                # 平移运动对平移噪声的贡献系数；增大使平移预测更分散。
+srt: 0.02                # 平移运动对旋转噪声的贡献系数；描述直行伴随的航向误差。
+str: 0.01                # 旋转运动对平移噪声的贡献系数；描述转向伴随的位置漂移。
+stt: 0.02                # 旋转运动对旋转噪声的贡献系数；描述转角估计误差。
+
+# 完整扫描更新与粒子重采样
+# 首帧直接初始化；其后累计平移、累计旋转或启用的时间条件任一满足即可更新。
+linearUpdate: 0.05       # 累计平移更新门槛，单位 m；当前约每移动 5 cm 触发，减小会提高更新密度和计算开销。
+angularUpdate: 0.0436    # 累计旋转更新门槛，单位 rad，约 2.50°；原地转向也可触发更新。
+temporalUpdate: -1.0     # 时间触发间隔，单位 s；负值关闭，正值在新扫描到达且超时后触发，并非独立定时器。
+resampleThreshold: 0.5   # 有效粒子数低于此比例×粒子总数时重采样；当前阈值约 25，增大更容易触发。
+particles: 50            # 固定粒子数量；各粒子维护轨迹及条件地图状态，增大会增加计算和内存开销。
+
+# 初始地图边界可随观测扩展，不是最终建图范围限制。
+xmin: -1.0               # 初始地图最小 X 坐标，单位 m。
+ymin: -1.0               # 初始地图最小 Y 坐标，单位 m。
+xmax: 1.0                # 初始地图最大 X 坐标，单位 m。
+ymax: 1.0                # 初始地图最大 Y 坐标，单位 m。
+delta: 0.05              # 栅格边长，单位 m/cell，当前为 5 cm；减半会使同样面积的栅格数约增至 4 倍。
+
+# 局部似然网格采样设置：标准 processScan → scanMatch 主路径调用 optimize 和
+# likelihoodAndScore，不直接调用使用以下四项的 likelihood 网格采样函数，故不作为主调参项。
+llsamplerange: 0.01      # likelihood 网格采样的平移范围，单位 m，在候选位姿的 X/Y 正负方向采样。
+llsamplestep: 0.01       # likelihood 网格采样的平移步长，单位 m；应为正值。
+lasamplerange: 0.005     # likelihood 网格采样的角度范围，单位 rad，约 ±0.286°。
+lasamplestep: 0.005      # likelihood 网格采样的角度步长，单位 rad，约 0.286°；应为正值。
